@@ -1,36 +1,67 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Mise
+
+Cooking app starter built with Next.js, Tailwind CSS, Clerk, and Supabase.
 
 ## Getting Started
 
-First, run the development server:
+Install dependencies if needed, then run the development server:
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environment Variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The repo includes:
 
-## Learn More
+- `.env.local` for local development placeholders
+- `.env.local.example` as a tracked template you can reuse in other environments
 
-To learn more about Next.js, take a look at the following resources:
+Fill in the Clerk and Supabase values before wiring up auth or database calls.
+Add `GEMINI_API_KEY` or `ANTHROPIC_API_KEY` for AI cooking help and
+`SPOONACULAR_API_KEY` for live recipe discovery. Without those keys, the app
+uses local fallbacks so the core workflow remains usable.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Clerk + Supabase
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+This repo uses:
 
-## Deploy on Vercel
+- Clerk for authentication
+- Supabase for application data
+- `clerk_user_id` as the identity key stored in the database
+- Gemini or Claude-compatible API calls for technique explanations, URL import,
+  and chat
+- Spoonacular recipe search for discovery
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+The protected recipe pages store personal recipes in the `recipes` table. URL
+imports first look for structured recipe data on the page, then fall back to the
+configured AI provider when needed. Create or update the tables by running the
+SQL in `supabase/schema.sql`.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Stack
+
+- Next.js App Router
+- Tailwind CSS v4
+- Clerk env scaffolding
+- Supabase env scaffolding
+
+## Structure
+
+- `app/page.tsx` contains the cooking-themed landing page
+- `app/recipes/page.tsx` lists saved recipes and contains manual/URL add flows
+- `app/recipes/[id]/page.tsx` contains the individual recipe cook view and
+  assistant button
+- `app/discover/page.tsx` contains the Spoonacular-backed discovery page
+- `app/api/*` contains the technique help, assistant, and discovery endpoints
+- `app/layout.tsx` defines app metadata and typography
+- `app/globals.css` holds the global theme tokens and base styles
+- `lib/supabase/*` contains the Supabase connection helpers
+
+## Next Steps
+
+1. Run `supabase/schema.sql` in Supabase.
+2. Add real Gemini/Anthropic and Spoonacular API keys to `.env.local`.
+3. Extend the `recipes` table into favorites, grocery lists, and photo journal entries.
