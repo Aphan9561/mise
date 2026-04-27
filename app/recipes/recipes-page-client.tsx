@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect } from "react";
+import { useActionState, useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { UserButton } from "@clerk/nextjs";
@@ -20,6 +20,15 @@ import {
   type RecipeActionState,
 } from "@/app/recipes/actions";
 import type { UserRecipe } from "@/lib/supabase/recipes";
+
+type ImportPreview = {
+  title: string;
+  description: string;
+  cuisine: string;
+  prepMinutes: number | null;
+  ingredients: string[];
+  instructions: string[];
+};
 
 type RecipesPageClientProps = {
   recipes: UserRecipe[];
@@ -66,12 +75,48 @@ export function RecipesPageClient({
     importRecipeFromUrlAction,
     initialActionState,
   );
+  const [recipeUrl, setRecipeUrl] = useState("");
+  const [preview, setPreview] = useState<ImportPreview | null>(null);
+  const [previewError, setPreviewError] = useState("");
+  const [isPreviewing, setIsPreviewing] = useState(false);
 
   useEffect(() => {
     if (manualState.status === "success" || importState.status === "success") {
       router.refresh();
     }
   }, [manualState.status, importState.status, router]);
+
+  async function previewRecipeUrl(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setIsPreviewing(true);
+    setPreview(null);
+    setPreviewError("");
+
+    try {
+      const response = await fetch("/api/import-recipe", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ url: recipeUrl }),
+      });
+      const data = (await response.json()) as {
+        recipe?: ImportPreview;
+        error?: string;
+      };
+
+      if (!response.ok || !data.recipe) {
+        setPreviewError(data.error ?? "Could not preview that recipe URL.");
+        return;
+      }
+
+      setPreview(data.recipe);
+    } catch {
+      setPreviewError("Could not reach the recipe importer.");
+    } finally {
+      setIsPreviewing(false);
+    }
+  }
 
   return (
     <main className="min-h-screen bg-[#f6f7f1] text-[#18211f]">
@@ -118,20 +163,56 @@ export function RecipesPageClient({
               <Import size={17} aria-hidden="true" />
               <h2 className="font-semibold">Import From URL</h2>
             </div>
-            <form action={importAction} className="space-y-3 p-4">
+            <form onSubmit={previewRecipeUrl} className="space-y-3 p-4">
               <label className="block text-sm font-medium">
                 Recipe URL
                 <input
-                  name="recipeUrl"
                   type="url"
                   required
+                  value={recipeUrl}
+                  onChange={(event) => setRecipeUrl(event.target.value)}
                   className="mt-1 w-full rounded-md border border-[#cfd8cf] bg-white px-3 py-2 text-sm outline-none focus:border-[#16806f]"
                   placeholder="https://example.com/recipe"
                 />
               </label>
               <button
                 type="submit"
-                disabled={isImporting || recipesMissingTable}
+                disabled={isPreviewing || recipesMissingTable}
+                className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-[#cfd8cf] bg-white px-4 py-2.5 text-sm font-semibold hover:bg-[#f1f5ee] disabled:cursor-not-allowed disabled:bg-[#e1e5df]"
+              >
+                {isPreviewing ? (
+                  <Loader2 className="animate-spin" size={16} aria-hidden="true" />
+                ) : (
+                  <Import size={16} aria-hidden="true" />
+                )}
+                Preview recipe
+              </button>
+              {previewError ? (
+                <p className="rounded-md bg-[#fde9e5] px-3 py-2 text-sm text-[#8d2f21]">
+                  {previewError}
+                </p>
+              ) : null}
+            </form>
+
+            <form action={importAction} className="space-y-3 px-4 pb-4">
+              <input name="recipeUrl" type="hidden" value={recipeUrl} />
+              {preview ? (
+                <div className="rounded-md border border-[#d8ddd4] bg-[#f8faf5] p-3">
+                  <p className="text-xs font-semibold uppercase text-[#16806f]">
+                    Ready to save
+                  </p>
+                  <h3 className="mt-1 font-[family:var(--font-fraunces)] text-xl text-[#173f3b]">
+                    {preview.title}
+                  </h3>
+                  <p className="mt-2 text-sm text-[#59635f]">
+                    {preview.ingredients.length} ingredients ·{" "}
+                    {preview.instructions.length} steps
+                  </p>
+                </div>
+              ) : null}
+              <button
+                type="submit"
+                disabled={isImporting || recipesMissingTable || !preview}
                 className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-[#173f3b] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#245c56] disabled:cursor-not-allowed disabled:bg-[#aab3ad]"
               >
                 {isImporting ? (
@@ -139,7 +220,7 @@ export function RecipesPageClient({
                 ) : (
                   <Import size={16} aria-hidden="true" />
                 )}
-                Import recipe
+                Save imported recipe
               </button>
               <ActionMessage state={importState} />
             </form>

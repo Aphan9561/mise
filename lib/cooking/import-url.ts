@@ -67,6 +67,20 @@ function asStringArray(value: JsonLdValue | undefined): string[] {
   return typeof value === "string" ? [stripHtml(value)] : [];
 }
 
+function asFirstString(value: JsonLdValue | undefined): string {
+  if (typeof value === "string") {
+    return stripHtml(value);
+  }
+
+  if (Array.isArray(value)) {
+    const first = value.find((item) => typeof item === "string");
+
+    return typeof first === "string" ? stripHtml(first) : "";
+  }
+
+  return "";
+}
+
 function findRecipeSchema(value: JsonLdValue): JsonLdObject | null {
   if (!value || typeof value !== "object") {
     return null;
@@ -104,17 +118,14 @@ function findRecipeSchema(value: JsonLdValue): JsonLdObject | null {
 }
 
 function parseJsonLdRecipe(html: string): ImportedRecipe | null {
-  const scripts = html.match(
-    /<script[^>]+type=["']application\/ld\+json["'][^>]*>[\s\S]*?<\/script>/gi,
-  );
+  const scripts = [
+    ...html.matchAll(
+      /<script\b[^>]*type=["'][^"']*ld\+json[^"']*["'][^>]*>([\s\S]*?)<\/script>/gi,
+    ),
+  ].map((match) => match[1]);
 
   for (const script of scripts ?? []) {
-    const jsonText = decodeEntities(
-      script
-        .replace(/^<script[^>]*>/i, "")
-        .replace(/<\/script>$/i, "")
-        .trim(),
-    );
+    const jsonText = decodeEntities(script.trim());
 
     try {
       const parsed = JSON.parse(jsonText) as JsonLdValue;
@@ -139,9 +150,7 @@ function parseJsonLdRecipe(html: string): ImportedRecipe | null {
             ? stripHtml(recipe.description)
             : "",
         cuisine:
-          typeof recipe.recipeCuisine === "string"
-            ? stripHtml(recipe.recipeCuisine)
-            : "",
+          asFirstString(recipe.recipeCuisine) || asFirstString(recipe.cuisine),
         prepMinutes:
           parseDurationMinutes(recipe.totalTime) ??
           parseDurationMinutes(recipe.cookTime) ??
@@ -221,8 +230,13 @@ export async function importRecipeFromUrl(url: string) {
   try {
     const response = await fetch(parsedUrl, {
       headers: {
-        "User-Agent": "Mise recipe importer",
+        Accept:
+          "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.9",
+        "User-Agent":
+          "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36 MiseRecipeImporter/1.0",
       },
+      redirect: "follow",
       signal: controller.signal,
     });
 
