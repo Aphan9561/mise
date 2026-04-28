@@ -53,7 +53,7 @@ Create or update the tables by running the SQL in `supabase/schema.sql`.
 - `app/page.tsx` contains the cooking-themed landing page
 - `app/recipes/page.tsx` lists saved recipes and contains manual/URL add flows
 - `app/recipes/[id]/page.tsx` contains the individual recipe cook view and
-  assistant button, plus the edit flow for saved recipes
+  assistant button, plus edit, notes, and delete flows for saved recipes
 - `app/discover/page.tsx` contains the Spoonacular-backed discovery page
 - `app/api/*` contains the technique help, assistant, and discovery endpoints
 - `app/layout.tsx` defines app metadata and typography

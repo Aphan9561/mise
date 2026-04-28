@@ -10,6 +10,7 @@ export type UserRecipe = {
   ingredients: string[];
   instructions: string[];
   image_url: string | null;
+  notes: string | null;
   source: string;
   source_url: string | null;
   created_at: string;
@@ -31,6 +32,7 @@ export type CreateRecipeInput = {
   ingredients: string[];
   instructions: string[];
   imageUrl?: string | null;
+  notes?: string;
   source?: string;
   sourceUrl?: string | null;
 };
@@ -45,6 +47,7 @@ export type UpdateRecipeInput = {
   ingredients: string[];
   instructions: string[];
   imageUrl?: string | null;
+  notes?: string;
 };
 
 function isMissingTableError(message: string) {
@@ -109,6 +112,7 @@ export async function createUserRecipe(input: CreateRecipeInput) {
       ingredients: input.ingredients,
       instructions: input.instructions,
       image_url: input.imageUrl ?? null,
+      notes: input.notes || null,
       source: input.source ?? "personal",
       source_url: input.sourceUrl ?? null,
     })
@@ -135,6 +139,7 @@ export async function updateUserRecipe(input: UpdateRecipeInput) {
       ingredients: input.ingredients,
       instructions: input.instructions,
       image_url: input.imageUrl ?? null,
+      notes: input.notes || null,
     })
     .eq("id", input.recipeId)
     .eq("clerk_user_id", input.clerkUserId)
@@ -146,4 +151,18 @@ export async function updateUserRecipe(input: UpdateRecipeInput) {
   }
 
   return data;
+}
+
+export async function deleteUserRecipe(clerkUserId: string, recipeId: string) {
+  const supabase = createAdminSupabaseClient();
+
+  const { error } = await supabase
+    .from("recipes")
+    .delete()
+    .eq("id", recipeId)
+    .eq("clerk_user_id", clerkUserId);
+
+  if (error) {
+    throw error;
+  }
 }

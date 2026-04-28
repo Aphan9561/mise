@@ -305,6 +305,14 @@ export function RecipesPageClient({
                   placeholder={"Saute garlic until fragrant.\nSimmer sauce until reduced."}
                 />
               </label>
+              <label className="block text-sm font-medium">
+                Notes
+                <textarea
+                  name="notes"
+                  className="mt-1 h-24 w-full resize-none rounded-md border border-[#cfd8cf] bg-white px-3 py-2 text-sm outline-none focus:border-[#16806f]"
+                  placeholder="Adjustments, reminders, or what to try next time"
+                />
+              </label>
               <button
                 type="submit"
                 disabled={isSavingManual || recipesMissingTable}

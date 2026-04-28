@@ -20,6 +20,7 @@ import {
   X,
 } from "lucide-react";
 import {
+  deleteRecipeAction,
   updateRecipeAction,
   type RecipeActionState,
 } from "@/app/recipes/actions";
@@ -78,6 +79,7 @@ export function RecipeDetailClient({ recipe }: RecipeDetailClientProps) {
   const [isTechniqueLoading, setIsTechniqueLoading] = useState(false);
   const [isAssistantOpen, setIsAssistantOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [deleteConfirmed, setDeleteConfirmed] = useState(false);
   const [editState, editAction, isSavingEdit] = useActionState(
     updateRecipeAction,
     initialEditState,
@@ -235,18 +237,20 @@ export function RecipeDetailClient({ recipe }: RecipeDetailClientProps) {
               <h1 className="font-[family:var(--font-fraunces)] text-4xl text-[#173f3b]">
                 {recipe.title}
               </h1>
-              <button
-                type="button"
-                onClick={() => setIsEditing((current) => !current)}
-                className="inline-flex shrink-0 items-center gap-2 rounded-md border border-[#cfd8cf] px-3 py-2 text-sm font-semibold hover:bg-[#f1f5ee]"
-              >
-                {isEditing ? (
-                  <X size={16} aria-hidden="true" />
-                ) : (
-                  <Pencil size={16} aria-hidden="true" />
-                )}
-                {isEditing ? "Close" : "Edit"}
-              </button>
+              <div className="flex shrink-0 items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setIsEditing((current) => !current)}
+                  className="inline-flex items-center gap-2 rounded-md border border-[#cfd8cf] px-3 py-2 text-sm font-semibold hover:bg-[#f1f5ee]"
+                >
+                  {isEditing ? (
+                    <X size={16} aria-hidden="true" />
+                  ) : (
+                    <Pencil size={16} aria-hidden="true" />
+                  )}
+                  {isEditing ? "Close" : "Edit"}
+                </button>
+              </div>
             </div>
             {recipe.description ? (
               <p className="mt-3 text-sm leading-6 text-[#59635f]">
@@ -340,6 +344,15 @@ export function RecipeDetailClient({ recipe }: RecipeDetailClientProps) {
                   className="mt-1 h-44 w-full resize-none rounded-md border border-[#cfd8cf] bg-white px-3 py-2 text-sm outline-none focus:border-[#16806f]"
                 />
               </label>
+              <label className="block text-sm font-medium">
+                Notes
+                <textarea
+                  name="notes"
+                  defaultValue={recipe.notes ?? ""}
+                  className="mt-1 h-28 w-full resize-none rounded-md border border-[#cfd8cf] bg-white px-3 py-2 text-sm outline-none focus:border-[#16806f]"
+                  placeholder="Adjustments, reminders, or what to try next time"
+                />
+              </label>
               <button
                 type="submit"
                 disabled={isSavingEdit}
@@ -378,6 +391,35 @@ export function RecipeDetailClient({ recipe }: RecipeDetailClientProps) {
                 </li>
               ))}
             </ul>
+          </div>
+          {recipe.notes ? (
+            <div className="border-t border-[#e4e8df] p-5">
+              <h2 className="font-semibold">Notes</h2>
+              <p className="mt-3 whitespace-pre-line rounded-md bg-[#fff8ed] px-3 py-3 text-sm leading-6 text-[#6a4a2d]">
+                {recipe.notes}
+              </p>
+            </div>
+          ) : null}
+          <div className="border-t border-[#e4e8df] p-5">
+            <form action={deleteRecipeAction} className="space-y-3">
+              <input name="recipeId" type="hidden" value={recipe.id} />
+              <label className="flex items-start gap-2 text-sm text-[#59635f]">
+                <input
+                  checked={deleteConfirmed}
+                  onChange={(event) => setDeleteConfirmed(event.target.checked)}
+                  className="mt-1"
+                  type="checkbox"
+                />
+                I understand this will permanently delete this recipe.
+              </label>
+              <button
+                type="submit"
+                disabled={!deleteConfirmed}
+                className="inline-flex items-center gap-2 rounded-md border border-[#e8b6ad] px-4 py-2.5 text-sm font-semibold text-[#9f3428] hover:bg-[#fde9e5] disabled:cursor-not-allowed disabled:border-[#d8ddd4] disabled:text-[#a0aaa4]"
+              >
+                Delete recipe
+              </button>
+            </form>
           </div>
         </section>
 

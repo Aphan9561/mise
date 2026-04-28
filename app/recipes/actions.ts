@@ -1,8 +1,13 @@
 "use server";
 
 import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
-import { createUserRecipe, updateUserRecipe } from "@/lib/supabase/recipes";
+import {
+  createUserRecipe,
+  deleteUserRecipe,
+  updateUserRecipe,
+} from "@/lib/supabase/recipes";
 import { importRecipeFromUrl } from "@/lib/cooking/import-url";
 
 export type RecipeActionState = {
@@ -83,6 +88,7 @@ export async function createRecipeAction(
       ingredients,
       instructions,
       imageUrl: readOptionalUrl(formData.get("imageUrl")),
+      notes: String(formData.get("notes") ?? "").trim(),
       source: String(formData.get("source") ?? "personal"),
       sourceUrl: String(formData.get("sourceUrl") ?? "").trim() || null,
     });
@@ -136,6 +142,7 @@ export async function importRecipeFromUrlAction(
       ingredients: recipe.ingredients,
       instructions: recipe.instructions,
       imageUrl: recipe.imageUrl,
+      notes: "",
       source: "url",
       sourceUrl: recipe.sourceUrl,
     });
@@ -191,6 +198,7 @@ export async function updateRecipeAction(
       ingredients,
       instructions,
       imageUrl: readOptionalUrl(formData.get("imageUrl")),
+      notes: String(formData.get("notes") ?? "").trim(),
     });
 
     revalidatePath("/recipes");
@@ -206,4 +214,22 @@ export async function updateRecipeAction(
       message: `Could not update recipe: ${formatRecipeError(error)}`,
     };
   }
+}
+
+export async function deleteRecipeAction(formData: FormData) {
+  const { userId } = await auth();
+
+  if (!userId) {
+    throw new Error("You need to be signed in before deleting a recipe.");
+  }
+
+  const recipeId = String(formData.get("recipeId") ?? "").trim();
+
+  if (!recipeId) {
+    throw new Error("Missing recipe ID.");
+  }
+
+  await deleteUserRecipe(userId, recipeId);
+  revalidatePath("/recipes");
+  redirect("/recipes");
 }
