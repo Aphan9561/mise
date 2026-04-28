@@ -1,45 +1,86 @@
 import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
-import { serverEnv } from "@/lib/env";
 import {
   fallbackDiscoveryRecipes,
+  mapTheMealDbToDiscoveryRecipe,
+  normalizeDiscoverySearchQuery,
   type DiscoveryRecipe,
+  type TheMealDbMeal,
 } from "@/lib/cooking/discovery";
 
-type SpoonacularRecipe = {
-  id: number;
-  title: string;
-  cuisines?: string[];
-  readyInMinutes?: number;
-  summary?: string;
-  image?: string;
-  extendedIngredients?: { original?: string; name?: string }[];
-  analyzedInstructions?: { steps?: { step?: string }[] }[];
+const THEMEALDB_BASE = "https://www.themealdb.com/api/json/v1/1";
+
+type MealDbListEntry = {
+  idMeal: string;
+  strMeal: string;
+  strMealThumb?: string;
 };
 
-function stripHtml(value: string) {
-  return value.replace(/<[^>]*>/g, "").replace(/\s+/g, " ").trim();
+function mealHasFullDetail(meal: TheMealDbMeal): boolean {
+  return Boolean(
+    meal.strInstructions?.trim() || meal.strIngredient1?.trim(),
+  );
 }
 
-function mapSpoonacularRecipe(recipe: SpoonacularRecipe): DiscoveryRecipe {
-  return {
-    id: String(recipe.id),
-    title: recipe.title,
-    cuisine: recipe.cuisines?.[0] ?? "Recommended",
-    readyInMinutes: recipe.readyInMinutes ?? 30,
-    summary: stripHtml(recipe.summary ?? "A recommended recipe to try."),
-    imageUrl: recipe.image ?? "",
-    ingredients:
-      recipe.extendedIngredients
-        ?.map((ingredient) => ingredient.original ?? ingredient.name ?? "")
-        .filter(Boolean)
-        .slice(0, 8) ?? [],
-    instructions:
-      recipe.analyzedInstructions?.[0]?.steps
-        ?.map((step) => step.step ?? "")
-        .filter(Boolean)
-        .slice(0, 6) ?? [],
-  };
+async function fetchJson<T>(url: string): Promise<T | null> {
+  try {
+    const response = await fetch(url);
+    if (!response.ok) return null;
+    return (await response.json()) as T;
+  } catch {
+    return null;
+  }
+}
+
+async function searchMealsByName(term: string): Promise<TheMealDbMeal[] | null> {
+  const data = await fetchJson<{ meals: TheMealDbMeal[] | null }>(
+    `${THEMEALDB_BASE}/search.php?s=${encodeURIComponent(term)}`,
+  );
+  return data?.meals ?? null;
+}
+
+async function filterMealsByMainIngredient(
+  ingredient: string,
+): Promise<MealDbListEntry[] | null> {
+  const normalized = ingredient.trim().toLowerCase().replace(/\s+/g, "_");
+  const data = await fetchJson<{ meals: MealDbListEntry[] | null }>(
+    `${THEMEALDB_BASE}/filter.php?i=${encodeURIComponent(normalized)}`,
+  );
+  return data?.meals ?? null;
+}
+
+async function lookupMeal(id: string): Promise<TheMealDbMeal | null> {
+  const data = await fetchJson<{ meals: TheMealDbMeal[] | null }>(
+    `${THEMEALDB_BASE}/lookup.php?i=${encodeURIComponent(id)}`,
+  );
+  return data?.meals?.[0] ?? null;
+}
+
+async function hydrateMeals(meals: TheMealDbMeal[]): Promise<DiscoveryRecipe[]> {
+  const detailed = await Promise.all(
+    meals.map(async (meal) => {
+      if (mealHasFullDetail(meal)) {
+        return mapTheMealDbToDiscoveryRecipe(meal);
+      }
+      const full = await lookupMeal(meal.idMeal);
+      return full
+        ? mapTheMealDbToDiscoveryRecipe(full)
+        : mapTheMealDbToDiscoveryRecipe(meal);
+    }),
+  );
+  return detailed.filter((r) => r.title);
+}
+
+function filterFallbackByQuery(
+  query: string,
+  recipes: DiscoveryRecipe[],
+): DiscoveryRecipe[] {
+  const q = query.toLowerCase();
+  const narrowed = recipes.filter((recipe) => {
+    const text = `${recipe.title} ${recipe.cuisine} ${recipe.ingredients.join(" ")}`;
+    return text.toLowerCase().includes(q);
+  });
+  return narrowed.length > 0 ? narrowed : recipes;
 }
 
 export async function GET(request: Request) {
@@ -50,42 +91,41 @@ export async function GET(request: Request) {
   }
 
   const url = new URL(request.url);
-  const query = url.searchParams.get("query")?.trim() || "weeknight dinner";
+  const rawQuery = url.searchParams.get("query")?.trim() || "weeknight dinner";
+  const searchTerm = normalizeDiscoverySearchQuery(rawQuery);
 
-  if (!serverEnv.spoonacularApiKey) {
+  let meals: TheMealDbMeal[] | null = await searchMealsByName(searchTerm);
+
+  if (!meals?.length) {
+    const filtered = await filterMealsByMainIngredient(searchTerm);
+    if (filtered?.length) {
+      meals = filtered.map((m) => ({
+        idMeal: m.idMeal,
+        strMeal: m.strMeal,
+        strMealThumb: m.strMealThumb,
+      })) as TheMealDbMeal[];
+    }
+  }
+
+  if (!meals?.length) {
     return NextResponse.json({
       source: "local",
-      recipes: fallbackDiscoveryRecipes.filter((recipe) => {
-        const text = `${recipe.title} ${recipe.cuisine} ${recipe.ingredients.join(" ")}`;
-        return text.toLowerCase().includes(query.toLowerCase()) || query === "weeknight dinner";
-      }),
+      recipes: filterFallbackByQuery(rawQuery, fallbackDiscoveryRecipes),
     });
   }
 
-  const spoonacularUrl = new URL(
-    "https://api.spoonacular.com/recipes/complexSearch",
-  );
-  spoonacularUrl.searchParams.set("apiKey", serverEnv.spoonacularApiKey);
-  spoonacularUrl.searchParams.set("query", query);
-  spoonacularUrl.searchParams.set("number", "6");
-  spoonacularUrl.searchParams.set("addRecipeInformation", "true");
-  spoonacularUrl.searchParams.set("fillIngredients", "true");
+  const slice = meals.slice(0, 6);
+  const recipes = await hydrateMeals(slice);
 
-  const response = await fetch(spoonacularUrl);
-
-  if (!response.ok) {
+  if (!recipes.length) {
     return NextResponse.json({
       source: "local",
-      recipes: fallbackDiscoveryRecipes,
+      recipes: filterFallbackByQuery(rawQuery, fallbackDiscoveryRecipes),
     });
   }
-
-  const data = (await response.json()) as {
-    results?: SpoonacularRecipe[];
-  };
 
   return NextResponse.json({
-    source: "spoonacular",
-    recipes: data.results?.map(mapSpoonacularRecipe) ?? [],
+    source: "TheMealDB",
+    recipes,
   });
 }

@@ -9,6 +9,76 @@ export type DiscoveryRecipe = {
   instructions: string[];
 };
 
+/** Shape returned by TheMealDB search.php and lookup.php (dynamic ingredient fields). */
+export type TheMealDbMeal = {
+  idMeal: string;
+  strMeal: string;
+  strArea?: string | null;
+  strCategory?: string | null;
+  strInstructions?: string | null;
+  strMealThumb?: string | null;
+} & Record<string, string | null | undefined>;
+
+const THEMEALDB_DEFAULT_SEARCH = "chicken";
+
+export function normalizeDiscoverySearchQuery(query: string): string {
+  const trimmed = query.trim();
+  if (!trimmed || trimmed.toLowerCase() === "weeknight dinner") {
+    return THEMEALDB_DEFAULT_SEARCH;
+  }
+  return trimmed;
+}
+
+function extractTheMealDbIngredients(meal: TheMealDbMeal): string[] {
+  const out: string[] = [];
+  for (let i = 1; i <= 20; i++) {
+    const ing = meal[`strIngredient${i}`]?.trim();
+    if (!ing) continue;
+    const meas = meal[`strMeasure${i}`]?.trim();
+    out.push(meas ? `${meas} ${ing}` : ing);
+  }
+  return out;
+}
+
+function extractTheMealDbInstructionSteps(text: string | null | undefined): string[] {
+  if (!text) return [];
+  return text
+    .split(/\r\n|\n/)
+    .map((line) =>
+      line
+        .replace(/^(step\s*\d+[:.)-]?\s*)/i, "")
+        .trim(),
+    )
+    .filter(Boolean)
+    .slice(0, 12);
+}
+
+function theMealDbSummary(meal: TheMealDbMeal): string {
+  const instructions = meal.strInstructions?.replace(/\s+/g, " ").trim() ?? "";
+  if (instructions.length <= 220) {
+    return instructions || "A recipe from TheMealDB.";
+  }
+  const area = meal.strArea?.trim();
+  const category = meal.strCategory?.trim();
+  if (area && category) {
+    return `${category} from ${area}. ${instructions.slice(0, 180)}…`;
+  }
+  return `${instructions.slice(0, 200)}…`;
+}
+
+export function mapTheMealDbToDiscoveryRecipe(meal: TheMealDbMeal): DiscoveryRecipe {
+  return {
+    id: meal.idMeal,
+    title: meal.strMeal,
+    cuisine: meal.strArea?.trim() || meal.strCategory?.trim() || "TheMealDB",
+    readyInMinutes: 30,
+    summary: theMealDbSummary(meal),
+    imageUrl: meal.strMealThumb?.trim() ?? "",
+    ingredients: extractTheMealDbIngredients(meal),
+    instructions: extractTheMealDbInstructionSteps(meal.strInstructions),
+  };
+}
+
 export const fallbackDiscoveryRecipes: DiscoveryRecipe[] = [
   {
     id: "fallback-miso-noodles",

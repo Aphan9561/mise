@@ -33,5 +33,4 @@ export const serverEnv = {
   anthropicApiKey: process.env.ANTHROPIC_API_KEY,
   geminiApiKey: process.env.GEMINI_API_KEY,
   geminiModel: process.env.GEMINI_MODEL ?? "gemini-3-flash-preview",
-  spoonacularApiKey: process.env.SPOONACULAR_API_KEY,
 };
