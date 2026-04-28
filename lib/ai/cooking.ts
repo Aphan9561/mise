@@ -16,6 +16,7 @@ type GeminiResponse = {
     content?: {
       parts?: { text?: string }[];
     };
+    finishReason?: string;
   }[];
 };
 
@@ -36,6 +37,14 @@ function readAnthropicText(data: AnthropicResponse) {
   return data.content?.find((block) => block.type === "text")?.text?.trim();
 }
 
+function getGeminiThinkingConfig(model: string) {
+  if (model.startsWith("gemini-3")) {
+    return { thinkingLevel: "minimal" };
+  }
+
+  return { thinkingBudget: 0 };
+}
+
 export async function generateCookingText({
   system,
   prompt,
@@ -48,66 +57,75 @@ export async function generateCookingText({
     );
     geminiUrl.searchParams.set("key", serverEnv.geminiApiKey);
 
-    const response = await fetch(geminiUrl, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        systemInstruction: {
-          parts: [{ text: system }],
+    try {
+      const response = await fetch(geminiUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
         },
-        contents: [
-          {
-            role: "user",
-            parts: [{ text: prompt }],
+        body: JSON.stringify({
+          systemInstruction: {
+            parts: [{ text: system }],
           },
-        ],
-        generationConfig: {
-          maxOutputTokens: maxTokens,
-          ...(json ? { responseMimeType: "application/json" } : {}),
-        },
-      }),
-    });
+          contents: [
+            {
+              role: "user",
+              parts: [{ text: prompt }],
+            },
+          ],
+          generationConfig: {
+            maxOutputTokens: Math.max(maxTokens, json ? 1200 : 512),
+            thinkingConfig: getGeminiThinkingConfig(serverEnv.geminiModel),
+            ...(json ? { responseMimeType: "application/json" } : {}),
+          },
+        }),
+      });
 
-    if (response.ok) {
-      const data = (await response.json()) as GeminiResponse;
-      const text = readGeminiText(data);
+      if (response.ok) {
+        const data = (await response.json()) as GeminiResponse;
+        const text = readGeminiText(data);
 
-      if (text) {
-        return { text, source: "gemini" };
+        if (text) {
+          return { text, source: "gemini" };
+        }
       }
+    } catch {
+      // Fall through to Anthropic or local fallback.
     }
   }
 
   if (serverEnv.anthropicApiKey) {
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": serverEnv.anthropicApiKey,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: "claude-3-5-haiku-latest",
-        max_tokens: maxTokens,
-        system,
-        messages: [
-          {
-            role: "user",
-            content: prompt,
-          },
-        ],
-      }),
-    });
+    try {
+      const response = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": serverEnv.anthropicApiKey,
+          "anthropic-version": "2023-06-01",
+        },
+        body: JSON.stringify({
+          model: "claude-3-5-haiku-latest",
+          max_tokens: maxTokens,
+          system,
+          messages: [
+            {
+              role: "user",
+              content: prompt,
+            },
+          ],
+        }),
+      });
 
-    if (response.ok) {
-      const data = (await response.json()) as AnthropicResponse;
-      const text = readAnthropicText(data);
+      if (response.ok) {
+        const data = (await response.json()) as AnthropicResponse;
+        const text = readAnthropicText(data);
 
-      if (text) {
-        return { text, source: "anthropic" };
+        if (text) {
+          return { text, source: "anthropic" };
+        }
       }
+    } catch {
+      // Fall through to local fallback.
     }
   }
 

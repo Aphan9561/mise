@@ -49,16 +49,21 @@ export async function POST(request: Request) {
   const recipeContext = body.recipe
     ? [
         `Recipe: ${body.recipe.title}`,
+        `Notes: ${body.recipe.notes ?? "No notes."}`,
         `Ingredients: ${(body.recipe.ingredients ?? []).join(", ")}`,
         `Steps: ${(body.recipe.instructions ?? []).join(" | ")}`,
       ].join("\n")
     : "No selected recipe.";
+  const recentMessages = (body.messages ?? [])
+    .slice(-6)
+    .map((message) => `${message.role}: ${message.content}`)
+    .join("\n");
 
   const result = await generateCookingText({
     maxTokens: 260,
     system:
       "You are Mise, a calm cooking assistant for home cooks. Give concise, practical answers that can be used while cooking. Prioritize safety, texture, timing, substitutions, and sensory cues.",
-    prompt: `${recipeContext}\n\nQuestion: ${question}`,
+    prompt: `${recipeContext}\n\nRecent conversation:\n${recentMessages || "No previous messages."}\n\nCurrent question: ${question}`,
   });
 
   if (!result) {
