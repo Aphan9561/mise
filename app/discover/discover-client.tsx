@@ -365,7 +365,6 @@ export function DiscoverClient({
                     </Link>
                     <div className="border-t border-[#e8efe9] bg-[#fafbf9] px-4 py-3">
                       <AddDiscoveryRecipeButton
-                        key={recipe.id}
                         discoveryId={recipe.id}
                         variant="card"
                         disabled={!canSave}

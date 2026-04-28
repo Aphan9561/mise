@@ -56,7 +56,8 @@ Create or update the tables by running the SQL in `supabase/schema.sql`.
   assistant button, plus edit, notes, and delete flows for saved recipes
 - `app/discover/page.tsx` lists TheMealDB results with a filter sidebar (category,
   area, main ingredient, or dish name)
-- `app/discover/[id]/page.tsx` is the full read-only recipe view for a discovered meal
+- `app/discover/[id]/page.tsx` is the full read-only recipe view for a discovered meal,
+  with **Add to my recipes** to copy it into Supabase
 - `app/api/*` contains the technique help, assistant, and discovery endpoints
 - `app/layout.tsx` defines app metadata and typography
 - `app/globals.css` holds the global theme tokens and base styles
