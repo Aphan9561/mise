@@ -24,18 +24,18 @@ export default async function DiscoverRecipePage({ params }: Props) {
   }
 
   return (
-    <main className="min-h-screen bg-[#f6f7f1] text-[#18211f]">
-      <header className="border-b border-[#d8ddd4] bg-white">
-        <div className="mx-auto flex max-w-3xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
+    <main className="min-h-screen bg-mise-page text-mise-ink">
+      <header className="mise-header">
+        <div className="mx-auto flex max-w-3xl items-center justify-between gap-4 px-4 py-5 sm:px-6">
           <Link
             href="/discover"
-            className="rounded-md border border-[#cfd8cf] bg-white px-3 py-2 text-sm font-semibold hover:bg-[#f1f5ee]"
+            className="mise-btn-ghost rounded-full text-sm"
           >
-            Back to discover
+            ← Discover
           </Link>
           <Link
             href="/recipes"
-            className="text-sm font-semibold text-[#16806f] hover:text-[#0d6b5e]"
+            className="inline-flex items-center gap-2 rounded-full bg-mise-chip px-4 py-2 text-sm font-semibold text-mise-chip-text"
           >
             My recipes
           </Link>

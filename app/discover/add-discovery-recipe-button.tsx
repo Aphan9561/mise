@@ -33,20 +33,20 @@ export function AddDiscoveryRecipeButton({
 
   const buttonClass =
     variant === "card"
-      ? "flex w-full items-center justify-center gap-2 rounded-lg border border-[#dce5dc] bg-[#f8faf8] px-3 py-2 text-sm font-medium text-[#2d4a3e] transition hover:border-[#c5d4c5] hover:bg-[#f0f5f0] disabled:cursor-not-allowed disabled:opacity-50"
-      : "inline-flex items-center justify-center gap-2 rounded-full bg-[#2f6a4a] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#27583d] disabled:cursor-not-allowed disabled:bg-[#aab397]";
+      ? "mise-btn-secondary w-full rounded-xl py-2.5 text-sm font-medium"
+      : "mise-btn-primary rounded-full px-6";
 
   return (
     <div className={variant === "detail" ? "mt-6" : ""}>
       {isSuccess ? (
-        <div className="flex flex-wrap items-center gap-3 rounded-lg border border-[#cfe8de] bg-[#f0faf5] px-4 py-3">
-          <span className="flex items-center gap-2 text-sm font-semibold text-[#1f5c40]">
+        <div className="flex flex-wrap items-center gap-3 rounded-xl border border-mise-accent/25 bg-mise-success-bg px-4 py-3">
+          <span className="flex items-center gap-2 text-sm font-semibold text-mise-success-text">
             <Check size={18} aria-hidden="true" />
             Saved to your recipes
           </span>
           <Link
             href={`/recipes/${state.newRecipeId}`}
-            className="text-sm font-semibold text-[#16806f] underline underline-offset-2 hover:text-[#0d6b5e]"
+            className="text-sm font-semibold text-mise-accent underline underline-offset-2 hover:text-mise-accent-hover"
           >
             Open in My recipes
           </Link>
@@ -69,7 +69,7 @@ export function AddDiscoveryRecipeButton({
         </form>
       )}
       {state.status === "error" && state.message ? (
-        <p className="mt-2 text-sm text-[#9a3412]" role="alert">
+        <p className="mt-2 text-sm text-mise-danger" role="alert">
           {state.message}
         </p>
       ) : null}

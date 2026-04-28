@@ -206,7 +206,7 @@ export function RecipeDetailClient({ recipe }: RecipeDetailClientProps) {
           key={`${segment}-${index}`}
           type="button"
           onClick={() => explainTechnique(normalizedTerm, step)}
-          className="mx-0.5 rounded bg-[#dff5ef] px-1.5 py-0.5 font-semibold text-[#0d6b5e] underline-offset-2 hover:bg-[#c7eadf] hover:underline"
+          className="mx-0.5 rounded-md bg-mise-technique px-1.5 py-0.5 font-semibold text-mise-technique-text underline-offset-2 hover:bg-mise-technique-hover hover:underline"
           title={`Explain ${normalizedTerm}`}
         >
           {segment}
@@ -217,10 +217,10 @@ export function RecipeDetailClient({ recipe }: RecipeDetailClientProps) {
 
   return (
     <>
-      <div className="mx-auto grid max-w-6xl gap-5 px-4 py-5 sm:px-6 lg:grid-cols-[0.8fr_1.2fr]">
-        <section className="rounded-lg border border-[#d8ddd4] bg-white">
+      <div className="mx-auto grid max-w-6xl gap-6 px-4 py-8 sm:px-6 lg:grid-cols-[0.82fr_1.18fr] lg:px-8">
+        <section className="mise-card overflow-hidden rounded-2xl">
           <div
-            className="aspect-[16/10] rounded-t-lg bg-[linear-gradient(135deg,#e7f0ff_0%,#dff5ef_55%,#ffe6d6_100%)] bg-cover bg-center"
+            className="aspect-[16/10] bg-[linear-gradient(145deg,#eef4ee_0%,#f4efe8_100%)] bg-cover bg-center"
             style={
               recipe.image_url
                 ? { backgroundImage: `url(${recipe.image_url})` }
@@ -229,19 +229,19 @@ export function RecipeDetailClient({ recipe }: RecipeDetailClientProps) {
             role={recipe.image_url ? "img" : undefined}
             aria-label={recipe.image_url ? recipe.title : undefined}
           />
-          <div className="border-b border-[#e4e8df] px-5 py-5">
-            <p className="text-xs font-semibold uppercase text-[#16806f]">
+          <div className="border-b border-mise-border px-6 py-6">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-mise-accent">
               {recipe.cuisine ?? recipe.source}
             </p>
             <div className="mt-2 flex items-start justify-between gap-3">
-              <h1 className="font-[family:var(--font-fraunces)] text-4xl text-[#173f3b]">
+              <h1 className="font-serif text-3xl leading-tight text-mise-ink sm:text-4xl">
                 {recipe.title}
               </h1>
               <div className="flex shrink-0 items-center gap-2">
                 <button
                   type="button"
                   onClick={() => setIsEditing((current) => !current)}
-                  className="inline-flex items-center gap-2 rounded-md border border-[#cfd8cf] px-3 py-2 text-sm font-semibold hover:bg-[#f1f5ee]"
+                  className="mise-btn-secondary rounded-xl py-2 pl-3 pr-3 text-xs sm:text-sm"
                 >
                   {isEditing ? (
                     <X size={16} aria-hidden="true" />
@@ -253,13 +253,13 @@ export function RecipeDetailClient({ recipe }: RecipeDetailClientProps) {
               </div>
             </div>
             {recipe.description ? (
-              <p className="mt-3 text-sm leading-6 text-[#59635f]">
+              <p className="mt-4 text-sm leading-relaxed text-mise-muted">
                 {recipe.description}
               </p>
             ) : null}
-            <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-[#66706b]">
-              <span className="inline-flex items-center gap-1 rounded bg-[#eef4ff] px-3 py-1.5 font-semibold text-[#164376]">
-                <Clock3 size={15} aria-hidden="true" />
+            <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-mise-chip px-3 py-1.5 text-xs font-semibold text-mise-chip-text">
+                <Clock3 size={14} aria-hidden="true" />
                 {recipe.prep_minutes ?? 30} min
               </span>
               {recipe.source_url ? (
@@ -267,9 +267,9 @@ export function RecipeDetailClient({ recipe }: RecipeDetailClientProps) {
                   href={recipe.source_url}
                   target="_blank"
                   rel="noreferrer"
-                  className="inline-flex items-center gap-1 rounded border border-[#cfd8cf] px-3 py-1.5 font-semibold hover:bg-[#f1f5ee]"
+                  className="mise-btn-secondary rounded-full py-1.5 pl-3 pr-3 text-xs"
                 >
-                  <ExternalLink size={15} aria-hidden="true" />
+                  <ExternalLink size={14} aria-hidden="true" />
                   Source
                 </a>
               ) : null}
@@ -277,86 +277,89 @@ export function RecipeDetailClient({ recipe }: RecipeDetailClientProps) {
           </div>
 
           {isEditing ? (
-            <form action={editAction} className="space-y-3 border-b border-[#e4e8df] p-5">
+            <form
+              action={editAction}
+              className="space-y-4 border-b border-mise-border p-6"
+            >
               <input name="recipeId" type="hidden" value={recipe.id} />
-              <label className="block text-sm font-medium">
+              <label className="mise-label">
                 Title
                 <input
                   name="title"
                   required
                   defaultValue={recipe.title}
-                  className="mt-1 w-full rounded-md border border-[#cfd8cf] bg-white px-3 py-2 text-sm outline-none focus:border-[#16806f]"
+                  className="mise-input"
                 />
               </label>
-              <label className="block text-sm font-medium">
+              <label className="mise-label">
                 Short note
                 <input
                   name="description"
                   defaultValue={recipe.description ?? ""}
-                  className="mt-1 w-full rounded-md border border-[#cfd8cf] bg-white px-3 py-2 text-sm outline-none focus:border-[#16806f]"
+                  className="mise-input"
                 />
               </label>
               <div className="grid gap-3 sm:grid-cols-2">
-                <label className="block text-sm font-medium">
+                <label className="mise-label">
                   Cuisine
                   <input
                     name="cuisine"
                     defaultValue={recipe.cuisine ?? ""}
-                    className="mt-1 w-full rounded-md border border-[#cfd8cf] bg-white px-3 py-2 text-sm outline-none focus:border-[#16806f]"
+                    className="mise-input"
                   />
                 </label>
-                <label className="block text-sm font-medium">
+                <label className="mise-label">
                   Minutes
                   <input
                     name="prepMinutes"
                     type="number"
                     min="1"
                     defaultValue={recipe.prep_minutes ?? ""}
-                    className="mt-1 w-full rounded-md border border-[#cfd8cf] bg-white px-3 py-2 text-sm outline-none focus:border-[#16806f]"
+                    className="mise-input"
                   />
                 </label>
               </div>
-              <label className="block text-sm font-medium">
+              <label className="mise-label">
                 Image URL
                 <input
                   name="imageUrl"
                   type="url"
                   defaultValue={recipe.image_url ?? ""}
-                  className="mt-1 w-full rounded-md border border-[#cfd8cf] bg-white px-3 py-2 text-sm outline-none focus:border-[#16806f]"
-                  placeholder="https://example.com/photo.jpg"
+                  className="mise-input"
+                  placeholder="https://…"
                 />
               </label>
-              <label className="block text-sm font-medium">
+              <label className="mise-label">
                 Ingredients
                 <textarea
                   name="ingredients"
                   required
                   defaultValue={recipe.ingredients.join("\n")}
-                  className="mt-1 h-36 w-full resize-none rounded-md border border-[#cfd8cf] bg-white px-3 py-2 text-sm outline-none focus:border-[#16806f]"
+                  className="mise-textarea h-36"
                 />
               </label>
-              <label className="block text-sm font-medium">
+              <label className="mise-label">
                 Instructions
                 <textarea
                   name="instructions"
                   required
                   defaultValue={recipe.instructions.join("\n")}
-                  className="mt-1 h-44 w-full resize-none rounded-md border border-[#cfd8cf] bg-white px-3 py-2 text-sm outline-none focus:border-[#16806f]"
+                  className="mise-textarea h-44"
                 />
               </label>
-              <label className="block text-sm font-medium">
+              <label className="mise-label">
                 Notes
                 <textarea
                   name="notes"
                   defaultValue={recipe.notes ?? ""}
-                  className="mt-1 h-28 w-full resize-none rounded-md border border-[#cfd8cf] bg-white px-3 py-2 text-sm outline-none focus:border-[#16806f]"
-                  placeholder="Adjustments, reminders, or what to try next time"
+                  className="mise-textarea h-28"
+                  placeholder="Adjustments for next time"
                 />
               </label>
               <button
                 type="submit"
                 disabled={isSavingEdit}
-                className="inline-flex items-center gap-2 rounded-md bg-[#173f3b] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#245c56] disabled:bg-[#aab3ad]"
+                className="mise-btn-primary"
               >
                 {isSavingEdit ? (
                   <Loader2 className="animate-spin" size={16} aria-hidden="true" />
@@ -367,10 +370,10 @@ export function RecipeDetailClient({ recipe }: RecipeDetailClientProps) {
               </button>
               {editState.message ? (
                 <p
-                  className={`rounded-md px-3 py-2 text-sm ${
+                  className={`rounded-xl px-3 py-2 text-sm ${
                     editState.status === "success"
-                      ? "bg-[#e7f6eb] text-[#27683b]"
-                      : "bg-[#fde9e5] text-[#8d2f21]"
+                      ? "bg-mise-success-bg text-mise-success-text"
+                      : "bg-mise-danger-bg text-mise-danger"
                   }`}
                 >
                   {editState.message}
@@ -379,13 +382,13 @@ export function RecipeDetailClient({ recipe }: RecipeDetailClientProps) {
             </form>
           ) : null}
 
-          <div className="p-5">
-            <h2 className="font-semibold">Ingredients</h2>
-            <ul className="mt-3 space-y-2">
+          <div className="p-6">
+            <h2 className="text-sm font-semibold text-mise-ink">Ingredients</h2>
+            <ul className="mt-4 space-y-2">
               {recipe.ingredients.map((ingredient) => (
                 <li
                   key={ingredient}
-                  className="rounded-md bg-[#f5f7f1] px-3 py-2 text-sm text-[#3f4a46]"
+                  className="rounded-xl border border-mise-border/70 bg-mise-surface-soft px-4 py-2.5 text-sm text-mise-ink"
                 >
                   {ingredient}
                 </li>
@@ -393,21 +396,21 @@ export function RecipeDetailClient({ recipe }: RecipeDetailClientProps) {
             </ul>
           </div>
           {recipe.notes ? (
-            <div className="border-t border-[#e4e8df] p-5">
-              <h2 className="font-semibold">Notes</h2>
-              <p className="mt-3 whitespace-pre-line rounded-md bg-[#fff8ed] px-3 py-3 text-sm leading-6 text-[#6a4a2d]">
+            <div className="border-t border-mise-border p-6">
+              <h2 className="text-sm font-semibold text-mise-ink">Notes</h2>
+              <p className="mt-3 whitespace-pre-line rounded-xl border border-mise-warm/20 bg-mise-warn-bg px-4 py-3 text-sm leading-relaxed text-mise-warn-text">
                 {recipe.notes}
               </p>
             </div>
           ) : null}
-          <div className="border-t border-[#e4e8df] p-5">
+          <div className="border-t border-mise-border p-6">
             <form action={deleteRecipeAction} className="space-y-3">
               <input name="recipeId" type="hidden" value={recipe.id} />
-              <label className="flex items-start gap-2 text-sm text-[#59635f]">
+              <label className="flex items-start gap-2 text-sm text-mise-muted">
                 <input
                   checked={deleteConfirmed}
                   onChange={(event) => setDeleteConfirmed(event.target.checked)}
-                  className="mt-1"
+                  className="mt-1 rounded border-mise-border"
                   type="checkbox"
                 />
                 I understand this will permanently delete this recipe.
@@ -415,7 +418,7 @@ export function RecipeDetailClient({ recipe }: RecipeDetailClientProps) {
               <button
                 type="submit"
                 disabled={!deleteConfirmed}
-                className="inline-flex items-center gap-2 rounded-md border border-[#e8b6ad] px-4 py-2.5 text-sm font-semibold text-[#9f3428] hover:bg-[#fde9e5] disabled:cursor-not-allowed disabled:border-[#d8ddd4] disabled:text-[#a0aaa4]"
+                className="inline-flex items-center gap-2 rounded-xl border border-mise-danger-border bg-mise-surface px-4 py-2.5 text-sm font-semibold text-mise-danger hover:bg-mise-danger-bg disabled:cursor-not-allowed disabled:border-mise-border disabled:text-mise-muted"
               >
                 Delete recipe
               </button>
@@ -423,17 +426,20 @@ export function RecipeDetailClient({ recipe }: RecipeDetailClientProps) {
           </div>
         </section>
 
-        <section className="rounded-lg border border-[#d8ddd4] bg-white">
-          <div className="border-b border-[#e4e8df] px-5 py-4">
-            <h2 className="font-semibold">Cook Mode</h2>
+        <section className="mise-card overflow-hidden rounded-2xl">
+          <div className="border-b border-mise-border px-6 py-4">
+            <h2 className="font-serif text-lg text-mise-ink">Cook mode</h2>
+            <p className="mt-1 text-xs text-mise-muted">
+              Tap highlighted terms for a quick technique note.
+            </p>
           </div>
-          <ol className="space-y-5 p-5">
+          <ol className="space-y-6 p-6">
             {recipe.instructions.map((step, index) => (
-              <li key={`${step}-${index}`} className="flex gap-3">
-                <span className="mt-0.5 grid size-8 shrink-0 place-items-center rounded bg-[#173f3b] text-sm font-semibold text-white">
+              <li key={`${step}-${index}`} className="flex gap-4">
+                <span className="mt-0.5 grid size-9 shrink-0 place-items-center rounded-xl bg-mise-forest text-sm font-semibold text-white">
                   {index + 1}
                 </span>
-                <p className="min-w-0 text-base leading-8 text-[#26312e]">
+                <p className="min-w-0 text-base leading-7 text-mise-ink">
                   {renderStepText(step)}
                 </p>
               </li>
@@ -442,26 +448,32 @@ export function RecipeDetailClient({ recipe }: RecipeDetailClientProps) {
         </section>
 
         {technique ? (
-          <section className="rounded-lg border border-[#d8ddd4] bg-white p-5 lg:col-span-2">
+          <section className="mise-card rounded-2xl p-6 lg:col-span-2">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2">
-                <Sparkles size={17} aria-hidden="true" />
-                <h2 className="font-semibold capitalize">{technique.term}</h2>
+                <Sparkles
+                  size={17}
+                  className="text-mise-accent"
+                  aria-hidden="true"
+                />
+                <h2 className="font-semibold capitalize text-mise-ink">
+                  {technique.term}
+                </h2>
               </div>
-              <span className="rounded bg-[#eef4ff] px-2 py-1 text-xs font-semibold text-[#164376]">
+              <span className="rounded-full bg-mise-chip px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-mise-chip-text">
                 {technique.source}
               </span>
             </div>
-            <p className="mt-3 text-sm leading-6 text-[#3f4a46]">
+            <p className="mt-4 text-sm leading-relaxed text-mise-muted">
               {technique.explanation}
             </p>
             {technique.cue ? (
-              <p className="mt-3 rounded-md bg-[#f0f7f5] px-3 py-2 text-sm text-[#0d6b5e]">
+              <p className="mt-4 rounded-xl border border-mise-accent/20 bg-mise-surface-soft px-4 py-3 text-sm text-mise-accent">
                 {technique.cue}
               </p>
             ) : null}
             {isTechniqueLoading ? (
-              <p className="mt-3 inline-flex items-center gap-2 text-xs font-semibold text-[#66706b]">
+              <p className="mt-4 inline-flex items-center gap-2 text-xs font-semibold text-mise-muted">
                 <Loader2 className="animate-spin" size={14} aria-hidden="true" />
                 Asking assistant
               </p>
@@ -473,43 +485,43 @@ export function RecipeDetailClient({ recipe }: RecipeDetailClientProps) {
       <button
         type="button"
         onClick={() => setIsAssistantOpen((current) => !current)}
-        className="fixed bottom-5 right-5 z-30 inline-flex items-center gap-2 rounded-md bg-[#173f3b] px-4 py-3 text-sm font-semibold text-white shadow-[0_18px_45px_rgba(23,63,59,0.25)] hover:bg-[#245c56]"
+        className="fixed bottom-6 right-6 z-30 mise-btn-primary rounded-full px-5 py-3 shadow-[var(--shadow-mise-float)]"
       >
         <Bot size={17} aria-hidden="true" />
         Ask Mise
       </button>
 
       {isAssistantOpen ? (
-        <aside className="fixed inset-x-4 bottom-20 z-30 rounded-lg border border-[#d8ddd4] bg-white shadow-[0_24px_70px_rgba(28,45,39,0.18)] sm:left-auto sm:w-[420px]">
-          <div className="flex items-center justify-between border-b border-[#e4e8df] px-4 py-3">
+        <aside className="fixed inset-x-4 bottom-24 z-30 mise-card max-h-[min(70vh,440px)] overflow-hidden rounded-2xl sm:left-auto sm:right-6 sm:w-[400px]">
+          <div className="flex items-center justify-between border-b border-mise-border px-4 py-3">
             <div className="flex items-center gap-2">
-              <Bot size={17} aria-hidden="true" />
-              <h2 className="font-semibold">Recipe Assistant</h2>
+              <Bot size={17} className="text-mise-accent" aria-hidden="true" />
+              <h2 className="text-sm font-semibold text-mise-ink">Assistant</h2>
             </div>
             <button
               type="button"
               onClick={() => setIsAssistantOpen(false)}
-              className="rounded-md border border-[#cfd8cf] px-2 py-1 text-xs font-semibold hover:bg-[#f1f5ee]"
+              className="mise-btn-ghost text-xs"
             >
               Close
             </button>
           </div>
-          <div className="flex h-[380px] flex-col">
+          <div className="flex max-h-[340px] flex-col">
             <div className="flex-1 space-y-3 overflow-y-auto p-4">
               {chatMessages.map((message, index) => (
                 <p
                   key={`${message.role}-${index}`}
-                  className={`rounded-md px-3 py-2 text-sm leading-6 ${
+                  className={`rounded-xl px-3 py-2.5 text-sm leading-relaxed ${
                     message.role === "user"
-                      ? "ml-8 bg-[#173f3b] text-white"
-                      : "mr-8 bg-[#f1f5ee] text-[#26312e]"
+                      ? "ml-6 bg-mise-chat-user text-white"
+                      : "mr-6 bg-mise-chat-assistant text-mise-ink"
                   }`}
                 >
                   {message.content}
                 </p>
               ))}
               {isChatLoading ? (
-                <p className="inline-flex items-center gap-2 rounded-md bg-[#f1f5ee] px-3 py-2 text-sm text-[#66706b]">
+                <p className="inline-flex items-center gap-2 rounded-xl bg-mise-chat-assistant px-3 py-2 text-sm text-mise-muted">
                   <Loader2 className="animate-spin" size={14} aria-hidden="true" />
                   Thinking
                 </p>
@@ -517,18 +529,18 @@ export function RecipeDetailClient({ recipe }: RecipeDetailClientProps) {
             </div>
             <form
               onSubmit={sendQuestion}
-              className="flex gap-2 border-t border-[#e4e8df] p-3"
+              className="flex gap-2 border-t border-mise-border bg-mise-surface-soft p-3"
             >
               <input
                 value={question}
                 onChange={(event) => setQuestion(event.target.value)}
-                className="min-w-0 flex-1 rounded-md border border-[#cfd8cf] px-3 py-2 text-sm outline-none focus:border-[#16806f]"
+                className="mise-input !mt-0 min-w-0 flex-1"
                 placeholder="Can I swap this ingredient?"
               />
               <button
                 type="submit"
                 disabled={isChatLoading}
-                className="grid size-10 place-items-center rounded-md bg-[#173f3b] text-white hover:bg-[#245c56] disabled:bg-[#aab3ad]"
+                className="grid size-11 shrink-0 place-items-center rounded-xl bg-mise-accent text-white hover:bg-mise-accent-hover disabled:opacity-45"
                 title="Send question"
               >
                 <Send size={16} aria-hidden="true" />

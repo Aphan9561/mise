@@ -50,10 +50,10 @@ function ActionMessage({ state }: { state: RecipeActionState }) {
 
   return (
     <p
-      className={`rounded-md px-3 py-2 text-sm ${
+      className={`rounded-xl px-3 py-2 text-sm ${
         state.status === "success"
-          ? "bg-[#e7f6eb] text-[#27683b]"
-          : "bg-[#fde9e5] text-[#8d2f21]"
+          ? "bg-mise-success-bg text-mise-success-text"
+          : "bg-mise-danger-bg text-mise-danger"
       }`}
     >
       {state.message}
@@ -120,18 +120,18 @@ export function RecipesPageClient({
   }
 
   return (
-    <main className="min-h-screen bg-[#f6f7f1] text-[#18211f]">
-      <header className="border-b border-[#d8ddd4] bg-white">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
+    <main className="min-h-screen bg-mise-page text-mise-ink">
+      <header className="mise-header">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-5 sm:px-6 lg:px-8">
           <Link href="/recipes" className="flex min-w-0 items-center gap-3">
-            <div className="grid size-10 place-items-center rounded-lg bg-[#173f3b] text-white">
-              <Utensils size={19} aria-hidden="true" />
+            <div className="grid size-11 place-items-center rounded-2xl bg-mise-forest text-white shadow-sm">
+              <Utensils size={20} aria-hidden="true" />
             </div>
             <div className="min-w-0">
-              <h1 className="truncate font-[family:var(--font-fraunces)] text-2xl text-[#173f3b]">
-                Mise Recipes
+              <h1 className="truncate font-serif text-xl text-mise-ink sm:text-2xl">
+                Mise
               </h1>
-              <p className="truncate text-sm text-[#66706b]">
+              <p className="truncate text-xs text-mise-muted sm:text-sm">
                 {primaryEmail ?? "Signed in"}
               </p>
             </div>
@@ -139,7 +139,7 @@ export function RecipesPageClient({
           <div className="flex items-center gap-2">
             <Link
               href="/discover"
-              className="inline-flex items-center gap-2 rounded-md border border-[#cfd8cf] bg-white px-3 py-2 text-sm font-semibold hover:bg-[#f1f5ee]"
+              className="mise-btn-secondary rounded-full py-2 pl-3 pr-4 text-sm"
             >
               <Compass size={16} aria-hidden="true" />
               Discover
@@ -149,71 +149,73 @@ export function RecipesPageClient({
         </div>
       </header>
 
-      <div className="mx-auto grid max-w-7xl gap-5 px-4 py-5 sm:px-6 lg:grid-cols-[390px_minmax(0,1fr)]">
-        <aside className="space-y-5">
+      <div className="mx-auto grid max-w-6xl gap-8 px-4 py-8 sm:px-6 lg:grid-cols-[minmax(0,22rem)_1fr] lg:gap-10 lg:px-8">
+        <aside className="space-y-6">
           {recipesMissingTable || recipesErrorMessage ? (
-            <section className="rounded-lg border border-[#f0c6a9] bg-[#fff8ed] p-4 text-sm text-[#7a4a22]">
+            <section className="rounded-2xl border border-mise-warm/25 bg-mise-warn-bg p-4 text-sm text-mise-warn-text">
               {recipesMissingTable
                 ? "Run supabase/schema.sql before saving recipes."
                 : recipesErrorMessage}
             </section>
           ) : null}
 
-          <section className="rounded-lg border border-[#d8ddd4] bg-white">
-            <div className="flex items-center gap-2 border-b border-[#e4e8df] px-4 py-3">
-              <Import size={17} aria-hidden="true" />
-              <h2 className="font-semibold">Import From URL</h2>
+          <section className="mise-card overflow-hidden rounded-2xl">
+            <div className="flex items-center gap-2 border-b border-mise-border px-5 py-4">
+              <Import size={17} className="text-mise-accent" aria-hidden="true" />
+              <h2 className="text-sm font-semibold text-mise-ink">
+                Import from URL
+              </h2>
             </div>
-            <form onSubmit={previewRecipeUrl} className="space-y-3 p-4">
-              <label className="block text-sm font-medium">
+            <form onSubmit={previewRecipeUrl} className="space-y-4 p-5">
+              <label className="mise-label">
                 Recipe URL
                 <input
                   type="url"
                   required
                   value={recipeUrl}
                   onChange={(event) => setRecipeUrl(event.target.value)}
-                  className="mt-1 w-full rounded-md border border-[#cfd8cf] bg-white px-3 py-2 text-sm outline-none focus:border-[#16806f]"
-                  placeholder="https://example.com/recipe"
+                  className="mise-input"
+                  placeholder="https://…"
                 />
               </label>
               <button
                 type="submit"
                 disabled={isPreviewing || recipesMissingTable}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-md border border-[#cfd8cf] bg-white px-4 py-2.5 text-sm font-semibold hover:bg-[#f1f5ee] disabled:cursor-not-allowed disabled:bg-[#e1e5df]"
+                className="mise-btn-secondary w-full"
               >
                 {isPreviewing ? (
                   <Loader2 className="animate-spin" size={16} aria-hidden="true" />
                 ) : (
                   <Import size={16} aria-hidden="true" />
                 )}
-                Preview recipe
+                Preview
               </button>
               {previewError ? (
-                <p className="rounded-md bg-[#fde9e5] px-3 py-2 text-sm text-[#8d2f21]">
+                <p className="rounded-xl bg-mise-danger-bg px-3 py-2 text-sm text-mise-danger">
                   {previewError}
                 </p>
               ) : null}
             </form>
 
-            <form action={importAction} className="space-y-3 px-4 pb-4">
+            <form action={importAction} className="space-y-4 border-t border-mise-border p-5">
               <input name="recipeUrl" type="hidden" value={recipeUrl} />
               {preview ? (
-                <div className="rounded-md border border-[#d8ddd4] bg-[#f8faf5] p-3">
+                <div className="rounded-xl border border-mise-border bg-mise-surface-soft p-4">
                   {preview.imageUrl ? (
                     <div
-                      className="mb-3 aspect-[4/3] rounded-md bg-cover bg-center"
+                      className="mb-3 aspect-[4/3] rounded-lg bg-cover bg-center"
                       style={{ backgroundImage: `url(${preview.imageUrl})` }}
                       role="img"
                       aria-label={preview.title}
                     />
                   ) : null}
-                  <p className="text-xs font-semibold uppercase text-[#16806f]">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-mise-accent">
                     Ready to save
                   </p>
-                  <h3 className="mt-1 font-[family:var(--font-fraunces)] text-xl text-[#173f3b]">
+                  <h3 className="mt-1 font-serif text-lg text-mise-ink">
                     {preview.title}
                   </h3>
-                  <p className="mt-2 text-sm text-[#59635f]">
+                  <p className="mt-2 text-xs text-mise-muted">
                     {preview.ingredients.length} ingredients ·{" "}
                     {preview.instructions.length} steps
                   </p>
@@ -222,101 +224,103 @@ export function RecipesPageClient({
               <button
                 type="submit"
                 disabled={isImporting || recipesMissingTable || !preview}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-[#173f3b] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#245c56] disabled:cursor-not-allowed disabled:bg-[#aab3ad]"
+                className="mise-btn-primary w-full"
               >
                 {isImporting ? (
                   <Loader2 className="animate-spin" size={16} aria-hidden="true" />
                 ) : (
                   <Import size={16} aria-hidden="true" />
                 )}
-                Save imported recipe
+                Save import
               </button>
               <ActionMessage state={importState} />
             </form>
           </section>
 
-          <section className="rounded-lg border border-[#d8ddd4] bg-white">
-            <div className="flex items-center gap-2 border-b border-[#e4e8df] px-4 py-3">
-              <Plus size={17} aria-hidden="true" />
-              <h2 className="font-semibold">Add Manually</h2>
+          <section className="mise-card overflow-hidden rounded-2xl">
+            <div className="flex items-center gap-2 border-b border-mise-border px-5 py-4">
+              <Plus size={17} className="text-mise-warm" aria-hidden="true" />
+              <h2 className="text-sm font-semibold text-mise-ink">Add manually</h2>
             </div>
-            <form action={manualAction} className="space-y-3 p-4">
-              <label className="block text-sm font-medium">
+            <form action={manualAction} className="space-y-4 p-5">
+              <label className="mise-label">
                 Title
                 <input
                   name="title"
                   required
-                  className="mt-1 w-full rounded-md border border-[#cfd8cf] bg-white px-3 py-2 text-sm outline-none focus:border-[#16806f]"
+                  className="mise-input"
                   placeholder="Lemon rice bowls"
                 />
               </label>
-              <label className="block text-sm font-medium">
+              <label className="mise-label">
                 Short note
                 <input
                   name="description"
-                  className="mt-1 w-full rounded-md border border-[#cfd8cf] bg-white px-3 py-2 text-sm outline-none focus:border-[#16806f]"
+                  className="mise-input"
                   placeholder="Fast, bright, pantry friendly"
                 />
               </label>
               <div className="grid grid-cols-2 gap-3">
-                <label className="block text-sm font-medium">
+                <label className="mise-label">
                   Cuisine
                   <input
                     name="cuisine"
-                    className="mt-1 w-full rounded-md border border-[#cfd8cf] bg-white px-3 py-2 text-sm outline-none focus:border-[#16806f]"
+                    className="mise-input"
                     placeholder="Italian"
                   />
                 </label>
-                <label className="block text-sm font-medium">
+                <label className="mise-label">
                   Minutes
                   <input
                     name="prepMinutes"
                     type="number"
                     min="1"
-                    className="mt-1 w-full rounded-md border border-[#cfd8cf] bg-white px-3 py-2 text-sm outline-none focus:border-[#16806f]"
+                    className="mise-input"
                     placeholder="25"
                   />
                 </label>
               </div>
-              <label className="block text-sm font-medium">
+              <label className="mise-label">
                 Image URL
                 <input
                   name="imageUrl"
                   type="url"
-                  className="mt-1 w-full rounded-md border border-[#cfd8cf] bg-white px-3 py-2 text-sm outline-none focus:border-[#16806f]"
-                  placeholder="https://example.com/photo.jpg"
+                  className="mise-input"
+                  placeholder="https://…"
                 />
               </label>
-              <label className="block text-sm font-medium">
+              <label className="mise-label">
                 Ingredients
                 <textarea
                   name="ingredients"
                   required
-                  className="mt-1 h-28 w-full resize-none rounded-md border border-[#cfd8cf] bg-white px-3 py-2 text-sm outline-none focus:border-[#16806f]"
+                  className="mise-textarea h-28"
                   placeholder={"1 cup rice\n2 eggs\n1 lemon"}
                 />
               </label>
-              <label className="block text-sm font-medium">
+              <label className="mise-label">
                 Instructions
                 <textarea
                   name="instructions"
                   required
-                  className="mt-1 h-32 w-full resize-none rounded-md border border-[#cfd8cf] bg-white px-3 py-2 text-sm outline-none focus:border-[#16806f]"
-                  placeholder={"Saute garlic until fragrant.\nSimmer sauce until reduced."}
+                  className="mise-textarea h-32"
+                  placeholder={
+                    "Saute garlic until fragrant.\nSimmer sauce until reduced."
+                  }
                 />
               </label>
-              <label className="block text-sm font-medium">
+              <label className="mise-label">
                 Notes
                 <textarea
                   name="notes"
-                  className="mt-1 h-24 w-full resize-none rounded-md border border-[#cfd8cf] bg-white px-3 py-2 text-sm outline-none focus:border-[#16806f]"
-                  placeholder="Adjustments, reminders, or what to try next time"
+                  className="mise-textarea h-24"
+                  placeholder="Adjustments for next time"
                 />
               </label>
               <button
                 type="submit"
                 disabled={isSavingManual || recipesMissingTable}
-                className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-[#e85234] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#cf4228] disabled:cursor-not-allowed disabled:bg-[#aab3ad]"
+                className="mise-btn-warm w-full"
               >
                 {isSavingManual ? (
                   <Loader2 className="animate-spin" size={16} aria-hidden="true" />
@@ -330,44 +334,48 @@ export function RecipesPageClient({
           </section>
         </aside>
 
-        <section className="rounded-lg border border-[#d8ddd4] bg-white">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#e4e8df] px-5 py-4">
+        <section className="mise-card min-h-[min(70vh,560px)] overflow-hidden rounded-2xl">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-mise-border px-6 py-5">
             <div className="flex items-center gap-2">
-              <BookOpen size={18} aria-hidden="true" />
-              <h2 className="font-semibold">Saved Recipes</h2>
+              <BookOpen size={18} className="text-mise-accent" aria-hidden="true" />
+              <h2 className="font-serif text-lg text-mise-ink">Your cookbook</h2>
             </div>
             <Link
               href="/discover"
-              className="inline-flex items-center gap-2 rounded-md bg-[#eef4ff] px-3 py-2 text-sm font-semibold text-[#164376] hover:bg-[#dfeafe]"
+              className="inline-flex items-center gap-2 rounded-full bg-mise-chip px-4 py-2 text-sm font-semibold text-mise-chip-text transition hover:opacity-90"
             >
               <Search size={16} aria-hidden="true" />
-              Discover new recipes
+              Discover
             </Link>
           </div>
 
           {recipes.length === 0 ? (
-            <div className="grid min-h-[420px] place-items-center p-8 text-center">
-              <div>
-                <BookOpen className="mx-auto text-[#8b9690]" size={38} />
-                <h3 className="mt-4 font-[family:var(--font-fraunces)] text-3xl text-[#173f3b]">
-                  No saved recipes yet
+            <div className="grid min-h-[400px] place-items-center p-10 text-center">
+              <div className="max-w-sm">
+                <BookOpen
+                  className="mx-auto text-mise-muted/50"
+                  size={40}
+                  aria-hidden="true"
+                />
+                <h3 className="mt-5 font-serif text-2xl text-mise-ink">
+                  No recipes yet
                 </h3>
-                <p className="mt-2 max-w-md text-sm leading-6 text-[#66706b]">
-                  Import a recipe URL, add one manually, or discover something
-                  new to start your cookbook.
+                <p className="mt-2 text-sm leading-relaxed text-mise-muted">
+                  Import a URL, add one manually, or browse Discover to start
+                  your cookbook.
                 </p>
               </div>
             </div>
           ) : (
-            <div className="grid gap-3 p-4 sm:grid-cols-2 xl:grid-cols-3">
+            <div className="grid gap-4 p-5 sm:grid-cols-2">
               {recipes.map((recipe) => (
                 <Link
                   key={recipe.id}
                   href={`/recipes/${recipe.id}`}
-                  className="overflow-hidden rounded-lg border border-[#e4e8df] transition hover:-translate-y-0.5 hover:border-[#16806f] hover:shadow-[0_12px_35px_rgba(28,45,39,0.08)]"
+                  className="group overflow-hidden rounded-2xl border border-mise-border bg-mise-surface transition hover:-translate-y-0.5 hover:border-mise-accent/35 hover:shadow-[var(--shadow-mise-float)]"
                 >
                   <div
-                    className="aspect-[4/3] bg-[linear-gradient(135deg,#e7f0ff_0%,#dff5ef_55%,#ffe6d6_100%)] bg-cover bg-center"
+                    className="aspect-[4/3] bg-[linear-gradient(145deg,#eef4ee_0%,#f4efe8_100%)] bg-cover bg-center"
                     style={
                       recipe.image_url
                         ? { backgroundImage: `url(${recipe.image_url})` }
@@ -377,20 +385,20 @@ export function RecipesPageClient({
                     aria-label={recipe.image_url ? recipe.title : undefined}
                   />
                   <div className="p-4">
-                    <p className="text-xs font-semibold uppercase text-[#16806f]">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-mise-accent">
                       {recipe.cuisine ?? recipe.source}
                     </p>
-                    <h3 className="mt-2 line-clamp-2 font-[family:var(--font-fraunces)] text-2xl text-[#173f3b]">
+                    <h3 className="mt-1 line-clamp-2 font-serif text-xl text-mise-ink transition group-hover:text-mise-accent">
                       {recipe.title}
                     </h3>
                     {recipe.description ? (
-                      <p className="mt-2 line-clamp-3 text-sm leading-6 text-[#59635f]">
+                      <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-mise-muted">
                         {recipe.description}
                       </p>
                     ) : null}
-                    <div className="mt-4 flex items-center justify-between text-sm text-[#66706b]">
+                    <div className="mt-3 flex items-center justify-between text-xs text-mise-muted">
                       <span className="inline-flex items-center gap-1">
-                        <Clock3 size={15} aria-hidden="true" />
+                        <Clock3 size={14} aria-hidden="true" />
                         {recipe.prep_minutes ?? 30} min
                       </span>
                       <span>{recipe.ingredients.length} ingredients</span>

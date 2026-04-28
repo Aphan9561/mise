@@ -21,20 +21,18 @@ export default async function DiscoverPage() {
   ]);
 
   return (
-    <main className="min-h-screen bg-[#f6f7f1] text-[#18211f]">
-      <header className="border-b border-[#e8ebe8] bg-white/80 backdrop-blur-sm">
+    <main className="min-h-screen bg-mise-page text-mise-ink">
+      <header className="mise-header">
         <div className="mx-auto flex max-w-6xl items-center px-4 py-5 sm:px-6 lg:px-8">
           <div className="flex flex-1 justify-start">
             <Link
               href="/recipes"
-              className="text-sm font-medium text-[#59635f] transition hover:text-[#173f3b]"
+              className="text-sm font-medium text-mise-muted transition hover:text-mise-ink"
             >
               ← My recipes
             </Link>
           </div>
-          <p className="font-[family:var(--font-fraunces)] text-lg text-[#173f3b] sm:text-xl">
-            Discover
-          </p>
+          <p className="font-serif text-lg text-mise-ink sm:text-xl">Discover</p>
           <div className="flex-1" aria-hidden="true" />
         </div>
       </header>

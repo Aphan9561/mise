@@ -25,20 +25,17 @@ export default async function RecipePage({ params }: RecipePageProps) {
   }
 
   return (
-    <main className="min-h-screen bg-[#f6f7f1] text-[#18211f]">
-      <header className="border-b border-[#d8ddd4] bg-white">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
-          <Link
-            href="/recipes"
-            className="rounded-md border border-[#cfd8cf] bg-white px-3 py-2 text-sm font-semibold hover:bg-[#f1f5ee]"
-          >
-            Back to recipes
+    <main className="min-h-screen bg-mise-page text-mise-ink">
+      <header className="mise-header">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-5 sm:px-6 lg:px-8">
+          <Link href="/recipes" className="mise-btn-ghost rounded-full text-sm">
+            ← Cookbook
           </Link>
           <Link
             href="/discover"
-            className="rounded-md bg-[#eef4ff] px-3 py-2 text-sm font-semibold text-[#164376] hover:bg-[#dfeafe]"
+            className="inline-flex items-center gap-2 rounded-full bg-mise-chip px-4 py-2 text-sm font-semibold text-mise-chip-text"
           >
-            Discover new recipes
+            Discover
           </Link>
         </div>
       </header>

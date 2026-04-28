@@ -1,18 +1,45 @@
 @import "tailwindcss";
 
 :root {
-  --background: #fffaf3;
-  --foreground: #2d241d;
-  --font-manrope: "Avenir Next", Avenir, "Segoe UI", sans-serif;
-  --font-fraunces: Iowan Old Style, Palatino Linotype, Book Antiqua, Georgia,
-    serif;
+  --background: #f4f2ed;
+  --foreground: #1a2320;
+  --selection-bg: #d4a574;
+  --selection-fg: #1a2320;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-manrope);
-  --font-serif: var(--font-fraunces);
+  --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
+  --font-serif: var(--font-fraunces), ui-serif, Georgia, serif;
+
+  --color-mise-page: #f4f2ed;
+  --color-mise-ink: #1a2320;
+  --color-mise-muted: #5e6e68;
+  --color-mise-surface: #ffffff;
+  --color-mise-surface-soft: #f9f8f5;
+  --color-mise-border: #dfe3df;
+  --color-mise-accent: #2a6b52;
+  --color-mise-accent-hover: #225544;
+  --color-mise-forest: #1e4d3d;
+  --color-mise-warm: #c2573d;
+  --color-mise-warm-hover: #a34730;
+  --color-mise-chip: #e4f0ea;
+  --color-mise-chip-text: #1e4d3d;
+  --color-mise-danger: #b4533a;
+  --color-mise-danger-bg: #fdeede;
+  --color-mise-danger-border: #e8c9b8;
+  --color-mise-success-bg: #e6f3eb;
+  --color-mise-success-text: #25633a;
+  --color-mise-warn-bg: #fff4e8;
+  --color-mise-warn-text: #7a4a22;
+  --color-mise-technique: #d4ebe3;
+  --color-mise-technique-hover: #bddfd2;
+  --color-mise-technique-text: #0f4d3e;
+  --color-mise-chat-user: #1e4d3d;
+  --color-mise-chat-assistant: #eef4f0;
+  --shadow-mise-card: 0 2px 14px rgba(26, 35, 32, 0.06);
+  --shadow-mise-float: 0 18px 48px rgba(26, 35, 32, 0.14);
 }
 
 * {
@@ -26,15 +53,60 @@ html {
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-manrope), sans-serif;
+  font-family: var(--font-sans);
 }
 
 a,
 button {
-  transition-duration: 180ms;
+  transition-duration: 160ms;
+  transition-timing-function: cubic-bezier(0.25, 0.1, 0.25, 1);
 }
 
 ::selection {
-  background: #e9b879;
-  color: #2d241d;
+  background: var(--selection-bg);
+  color: var(--selection-fg);
+}
+
+@layer components {
+  .mise-input {
+    @apply mt-1.5 w-full rounded-xl border border-mise-border bg-mise-surface-soft px-3 py-2.5 text-sm text-mise-ink outline-none transition placeholder:text-mise-muted/65 focus:border-mise-accent focus:bg-mise-surface focus:ring-2 focus:ring-mise-accent/15;
+  }
+  .mise-textarea {
+    @apply mt-1.5 w-full resize-none rounded-xl border border-mise-border bg-mise-surface-soft px-3 py-2.5 text-sm text-mise-ink outline-none transition placeholder:text-mise-muted/65 focus:border-mise-accent focus:bg-mise-surface focus:ring-2 focus:ring-mise-accent/15;
+  }
+  .mise-label {
+    @apply block text-xs font-medium uppercase tracking-wide text-mise-muted;
+  }
+  .mise-card {
+    @apply rounded-2xl border border-mise-border bg-mise-surface;
+    box-shadow: var(--shadow-mise-card);
+  }
+  .mise-btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-mise-accent px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-mise-accent-hover disabled:cursor-not-allowed disabled:opacity-45;
+  }
+  .mise-btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-mise-border bg-mise-surface px-4 py-2.5 text-sm font-semibold text-mise-ink hover:bg-mise-surface-soft disabled:cursor-not-allowed disabled:opacity-45;
+  }
+  .mise-btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl border border-transparent px-3 py-2 text-sm font-medium text-mise-muted hover:border-mise-border hover:bg-mise-surface-soft hover:text-mise-ink;
+  }
+  .mise-btn-warm {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-mise-warm px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-mise-warm-hover disabled:cursor-not-allowed disabled:opacity-45;
+  }
+  .mise-header {
+    @apply border-b border-mise-border bg-mise-surface/90 backdrop-blur-md;
+  }
+  .mise-hero-gradient {
+    background: radial-gradient(
+        120% 80% at 85% 5%,
+        rgba(194, 87, 61, 0.09),
+        transparent 50%
+      ),
+      radial-gradient(
+        70% 50% at 10% 10%,
+        rgba(42, 107, 82, 0.1),
+        transparent 45%
+      ),
+      linear-gradient(180deg, #faf7f1 0%, var(--background) 55%);
+  }
 }
