@@ -22,17 +22,20 @@ export default async function DiscoverPage() {
 
   return (
     <main className="min-h-screen bg-[#f6f7f1] text-[#18211f]">
-      <header className="border-b border-[#d8ddd4] bg-white">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
-          <Link
-            href="/recipes"
-            className="rounded-md border border-[#cfd8cf] bg-white px-3 py-2 text-sm font-semibold hover:bg-[#f1f5ee]"
-          >
-            Back to recipes
-          </Link>
-          <h1 className="font-[family:var(--font-fraunces)] text-2xl text-[#173f3b]">
-            Discover New Recipes
-          </h1>
+      <header className="border-b border-[#e8ebe8] bg-white/80 backdrop-blur-sm">
+        <div className="mx-auto flex max-w-6xl items-center px-4 py-5 sm:px-6 lg:px-8">
+          <div className="flex flex-1 justify-start">
+            <Link
+              href="/recipes"
+              className="text-sm font-medium text-[#59635f] transition hover:text-[#173f3b]"
+            >
+              ← My recipes
+            </Link>
+          </div>
+          <p className="font-[family:var(--font-fraunces)] text-lg text-[#173f3b] sm:text-xl">
+            Discover
+          </p>
+          <div className="flex-1" aria-hidden="true" />
         </div>
       </header>
       <DiscoverClient

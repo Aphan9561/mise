@@ -33,7 +33,7 @@ export function AddDiscoveryRecipeButton({
 
   const buttonClass =
     variant === "card"
-      ? "flex w-full items-center justify-center gap-2 rounded-md border border-[#2f6a4a] bg-[#f5faf7] px-3 py-2 text-sm font-semibold text-[#2f6a4a] transition hover:bg-[#e8f2ec] disabled:cursor-not-allowed disabled:opacity-60"
+      ? "flex w-full items-center justify-center gap-2 rounded-lg border border-[#dce5dc] bg-[#f8faf8] px-3 py-2 text-sm font-medium text-[#2d4a3e] transition hover:border-[#c5d4c5] hover:bg-[#f0f5f0] disabled:cursor-not-allowed disabled:opacity-50"
       : "inline-flex items-center justify-center gap-2 rounded-full bg-[#2f6a4a] px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#27583d] disabled:cursor-not-allowed disabled:bg-[#aab397]";
 
   return (

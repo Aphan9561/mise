@@ -3,12 +3,9 @@
 import Link from "next/link";
 import { useCallback, useState, type FormEvent } from "react";
 import {
-  Clock3,
   Filter,
   Loader2,
   Search,
-  Sparkles,
-  Utensils,
   X,
 } from "lucide-react";
 import {
@@ -122,153 +119,153 @@ export function DiscoverClient({
   }
 
   const filterSummary = category
-    ? `Category: ${category}`
+    ? category
     : area
-      ? `Area: ${area}`
+      ? area
       : ingredient.trim()
-        ? `Ingredient: ${ingredient}`
-        : `Dish search: ${query}`;
+        ? ingredient
+        : query;
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-5 sm:px-6">
-      <div className="flex flex-col gap-6 lg:flex-row lg:items-start">
+    <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="flex flex-col gap-10 lg:flex-row lg:items-start lg:gap-12">
         <aside
-          className={`shrink-0 rounded-lg border border-[#d8ddd4] bg-white lg:w-72 ${
+          className={`shrink-0 lg:sticky lg:top-6 lg:w-64 ${
             filtersOpen ? "block" : "hidden lg:block"
           }`}
         >
           <form
             onSubmit={applyFilters}
-            className="flex flex-col gap-4 p-4"
+            className="flex flex-col gap-5 rounded-2xl border border-[#e0e6e0] bg-white/90 p-5 shadow-[0_1px_3px_rgba(24,33,31,0.06)] backdrop-blur-sm"
             aria-labelledby="discover-filters-heading"
           >
-            <div className="flex items-center justify-between gap-2 border-b border-[#e4e8df] pb-3">
+            <div className="flex items-center justify-between gap-2">
               <h2
                 id="discover-filters-heading"
-                className="flex items-center gap-2 font-semibold text-[#173f3b]"
+                className="text-sm font-semibold text-[#173f3b]"
               >
-                <Filter size={18} className="text-[#16806f]" aria-hidden="true" />
-                Filters
+                Find recipes
               </h2>
               <button
                 type="button"
                 onClick={() => {
                   void resetAndSearch();
                 }}
-                className="text-xs font-semibold text-[#16806f] hover:underline"
+                className="text-xs font-medium text-[#16806f]/90 hover:text-[#0d6b5e]"
               >
                 Reset
               </button>
             </div>
 
-            <p className="text-xs leading-5 text-[#59635f]">
-              Category, area, or main ingredient each run their own TheMealDB
-              search (first wins: category → area → ingredient → name search).
+            <p className="text-xs leading-relaxed text-[#6b756f]">
+              Use one path: category, area, ingredient, or name (in that order).
             </p>
 
-            <label className="text-sm font-medium text-[#2d241d]">
-              Category
-              <select
-                value={category}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  setCategory(v);
-                  if (v) {
-                    setArea("");
-                    setIngredient("");
-                  }
-                }}
-                className="mt-1 w-full rounded-md border border-[#cfd8cf] bg-white px-3 py-2 text-sm outline-none focus:border-[#16806f]"
-              >
-                <option value="">Any category</option>
-                {categories.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <div className="flex flex-col gap-4">
+              <label className="text-xs font-medium text-[#3d4a45]">
+                Category
+                <select
+                  value={category}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setCategory(v);
+                    if (v) {
+                      setArea("");
+                      setIngredient("");
+                    }
+                  }}
+                  className="mt-1.5 w-full rounded-lg border border-[#d5ddd5] bg-[#fafbf9] px-3 py-2 text-sm text-[#18211f] outline-none transition focus:border-[#16806f] focus:bg-white"
+                >
+                  <option value="">Any</option>
+                  {categories.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+              </label>
 
-            <label className="text-sm font-medium text-[#2d241d]">
-              Area (cuisine)
-              <select
-                value={area}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  setArea(v);
-                  if (v) {
-                    setCategory("");
-                    setIngredient("");
-                  }
-                }}
-                className="mt-1 w-full rounded-md border border-[#cfd8cf] bg-white px-3 py-2 text-sm outline-none focus:border-[#16806f]"
-              >
-                <option value="">Any area</option>
-                {areas.map((a) => (
-                  <option key={a} value={a}>
-                    {a}
-                  </option>
-                ))}
-              </select>
-            </label>
+              <label className="text-xs font-medium text-[#3d4a45]">
+                Cuisine / area
+                <select
+                  value={area}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setArea(v);
+                    if (v) {
+                      setCategory("");
+                      setIngredient("");
+                    }
+                  }}
+                  className="mt-1.5 w-full rounded-lg border border-[#d5ddd5] bg-[#fafbf9] px-3 py-2 text-sm text-[#18211f] outline-none transition focus:border-[#16806f] focus:bg-white"
+                >
+                  <option value="">Any</option>
+                  {areas.map((a) => (
+                    <option key={a} value={a}>
+                      {a}
+                    </option>
+                  ))}
+                </select>
+              </label>
 
-            <label className="text-sm font-medium text-[#2d241d]">
-              Main ingredient
-              <input
-                value={ingredient}
-                onChange={(e) => {
-                  const v = e.target.value;
-                  setIngredient(v);
-                  if (v.trim()) {
-                    setCategory("");
-                    setArea("");
-                  }
-                }}
-                className="mt-1 w-full rounded-md border border-[#cfd8cf] px-3 py-2 text-sm outline-none focus:border-[#16806f]"
-                placeholder="e.g. salmon, rice"
-              />
-            </label>
+              <label className="text-xs font-medium text-[#3d4a45]">
+                Main ingredient
+                <input
+                  value={ingredient}
+                  onChange={(e) => {
+                    const v = e.target.value;
+                    setIngredient(v);
+                    if (v.trim()) {
+                      setCategory("");
+                      setArea("");
+                    }
+                  }}
+                  className="mt-1.5 w-full rounded-lg border border-[#d5ddd5] bg-[#fafbf9] px-3 py-2 text-sm outline-none transition focus:border-[#16806f] focus:bg-white"
+                  placeholder="e.g. salmon"
+                />
+              </label>
 
-            <label className="text-sm font-medium text-[#2d241d]">
-              Search by dish name
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                className="mt-1 w-full rounded-md border border-[#cfd8cf] px-3 py-2 text-sm outline-none focus:border-[#16806f]"
-                placeholder="curry, pasta…"
-              />
-            </label>
+              <label className="text-xs font-medium text-[#3d4a45]">
+                Dish name
+                <input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  className="mt-1.5 w-full rounded-lg border border-[#d5ddd5] bg-[#fafbf9] px-3 py-2 text-sm outline-none transition focus:border-[#16806f] focus:bg-white"
+                  placeholder="Search…"
+                />
+              </label>
+            </div>
 
             <button
               type="submit"
               disabled={isSearching}
-              className="flex items-center justify-center gap-2 rounded-md bg-[#2f6a4a] py-2.5 text-sm font-semibold text-white hover:bg-[#27583d] disabled:bg-[#aab397]"
+              className="flex items-center justify-center gap-2 rounded-lg bg-[#2f6a4a] py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#27583d] disabled:bg-[#9aaa9c]"
             >
               {isSearching ? (
                 <Loader2 className="animate-spin" size={16} aria-hidden="true" />
               ) : (
                 <Search size={16} aria-hidden="true" />
               )}
-              Apply filters
+              Search
             </button>
           </form>
         </aside>
 
-        <div className="min-w-0 flex-1 space-y-4">
-          <div className="flex items-center justify-between gap-3 lg:hidden">
+        <div className="min-w-0 flex-1">
+          <div className="mb-6 flex items-center justify-between gap-3 lg:hidden">
             <button
               type="button"
               onClick={() => setFiltersOpen((o) => !o)}
-              className="flex items-center gap-2 rounded-md border border-[#cfd8cf] bg-white px-3 py-2 text-sm font-semibold"
+              className="flex items-center gap-2 rounded-full border border-[#d5ddd5] bg-white px-4 py-2 text-sm font-medium text-[#173f3b] shadow-sm"
             >
-              <Filter size={16} aria-hidden="true" />
-              {filtersOpen ? "Hide filters" : "Filters"}
+              <Filter size={16} className="text-[#16806f]" aria-hidden="true" />
+              {filtersOpen ? "Close" : "Filters"}
             </button>
             {filtersOpen ? (
               <button
                 type="button"
                 onClick={() => setFiltersOpen(false)}
-                className="grid size-9 place-items-center rounded-md border border-[#cfd8cf]"
+                className="grid size-10 place-items-center rounded-full border border-[#d5ddd5] bg-white text-[#59635f]"
                 aria-label="Close filters"
               >
                 <X size={16} />
@@ -276,39 +273,29 @@ export function DiscoverClient({
             ) : null}
           </div>
 
-          <section className="rounded-lg border border-[#d8ddd4] bg-white">
-            <div className="grid gap-4 border-b border-[#e4e8df] px-5 py-5">
-              <div>
-                <p className="text-xs font-semibold uppercase text-[#16806f]">
-                  {source}
-                </p>
-                <h1 className="mt-2 font-[family:var(--font-fraunces)] text-3xl text-[#173f3b] sm:text-4xl">
-                  Discover recipes
-                </h1>
-                <p className="mt-2 text-sm text-[#59635f]">
-                  Active: {filterSummary}. Tap a card for full ingredients and
-                  steps.
-                </p>
-              </div>
-            </div>
+          <p className="mb-6 text-sm text-[#6b756f]">
+            <span className="text-[#47524d]">{filterSummary}</span>
+            <span className="mx-2 text-[#c5ccc5]">·</span>
+            <span className="tabular-nums">{recipes.length} results</span>
+            <span className="mx-2 text-[#c5ccc5]">·</span>
+            <span className="italic text-[#8a938d]">{source}</span>
+          </p>
 
-            <div className="grid gap-4 p-4 md:grid-cols-2 xl:grid-cols-3">
-              {recipes.map((recipe) => {
-                const detailHref = `/discover/${encodeURIComponent(recipe.id)}`;
-                const canSave =
-                  recipe.ingredients.length > 0 &&
-                  recipe.instructions.length > 0;
-                return (
-                  <div
-                    key={recipe.id}
-                    className="flex flex-col overflow-hidden rounded-lg border border-[#e4e8df] bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-[#16806f]/40 hover:shadow-md"
-                  >
+          <ul className="grid gap-6 sm:grid-cols-2">
+            {recipes.map((recipe) => {
+              const detailHref = `/discover/${encodeURIComponent(recipe.id)}`;
+              const canSave =
+                recipe.ingredients.length > 0 &&
+                recipe.instructions.length > 0;
+              return (
+                <li key={recipe.id} className="list-none">
+                  <div className="flex h-full flex-col overflow-hidden rounded-2xl border border-[#e2e8e2] bg-white shadow-[0_2px_12px_rgba(24,33,31,0.04)] transition hover:border-[#c5d4c5] hover:shadow-[0_8px_24px_rgba(24,33,31,0.07)]">
                     <Link
                       href={detailHref}
-                      className="group block flex-1 p-4 pb-3 text-left outline-none ring-[#16806f] focus-visible:ring-2"
+                      className="group block flex-1 px-5 pt-5 text-left outline-none ring-[#16806f]/30 focus-visible:ring-2"
                     >
                       <div
-                        className="mb-4 aspect-[4/3] rounded-md bg-[linear-gradient(135deg,#e7f0ff_0%,#dff5ef_55%,#ffe6d6_100%)] bg-cover bg-center transition group-hover:opacity-95"
+                        className="mb-4 aspect-[16/10] w-full rounded-xl bg-[linear-gradient(145deg,#eef4ee_0%,#f4efe8_100%)] bg-cover bg-center"
                         style={
                           recipe.imageUrl
                             ? { backgroundImage: `url(${recipe.imageUrl})` }
@@ -320,50 +307,27 @@ export function DiscoverClient({
                         }
                       />
                       <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <p className="text-xs font-semibold uppercase text-[#16806f]">
+                        <div className="min-w-0">
+                          <p className="text-[11px] font-medium uppercase tracking-wide text-[#16806f]/90">
                             {recipe.cuisine}
+                            <span className="font-normal normal-case text-[#8a938d]">
+                              {" "}
+                              · ~{recipe.readyInMinutes} min
+                            </span>
                           </p>
-                          <h2 className="mt-2 font-[family:var(--font-fraunces)] text-2xl text-[#173f3b] group-hover:text-[#0d6b5e]">
+                          <h2 className="mt-1 font-[family:var(--font-fraunces)] text-xl leading-snug text-[#173f3b] transition group-hover:text-[#0f5c52] sm:text-[1.35rem]">
                             {recipe.title}
                           </h2>
                         </div>
-                        <span className="inline-flex shrink-0 items-center gap-1 rounded bg-[#eef4ff] px-2 py-1 text-xs font-semibold text-[#164376]">
-                          <Clock3 size={13} aria-hidden="true" />
-                          {recipe.readyInMinutes}
-                        </span>
                       </div>
-                      <p className="mt-3 line-clamp-3 text-sm leading-6 text-[#59635f]">
+                      <p className="mt-3 line-clamp-2 text-sm leading-relaxed text-[#59635f]">
                         {recipe.summary}
                       </p>
-                      <div className="mt-4 grid gap-3">
-                        <div className="rounded-md bg-[#f5f7f1] p-3">
-                          <div className="flex items-center gap-2 text-sm font-semibold">
-                            <Utensils size={15} aria-hidden="true" />
-                            Ingredients
-                          </div>
-                          <ul className="mt-2 space-y-1 text-sm text-[#59635f]">
-                            {recipe.ingredients.slice(0, 4).map((ing) => (
-                              <li key={ing}>{ing}</li>
-                            ))}
-                          </ul>
-                        </div>
-                        <div className="rounded-md bg-[#f0f7f5] p-3">
-                          <div className="flex items-center gap-2 text-sm font-semibold text-[#0d6b5e]">
-                            <Sparkles size={15} aria-hidden="true" />
-                            First step
-                          </div>
-                          <p className="mt-2 text-sm leading-6 text-[#315d55]">
-                            {recipe.instructions[0] ??
-                              "Open the recipe for full steps."}
-                          </p>
-                        </div>
-                      </div>
-                      <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-[#16806f] opacity-0 transition group-hover:opacity-100">
-                        View recipe →
+                      <p className="mt-4 text-xs font-medium text-[#16806f] opacity-70 transition group-hover:opacity-100">
+                        Open recipe →
                       </p>
                     </Link>
-                    <div className="border-t border-[#e8efe9] bg-[#fafbf9] px-4 py-3">
+                    <div className="mt-auto border-t border-[#eef2ee] px-5 py-4">
                       <AddDiscoveryRecipeButton
                         discoveryId={recipe.id}
                         variant="card"
@@ -371,10 +335,10 @@ export function DiscoverClient({
                       />
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          </section>
+                </li>
+              );
+            })}
+          </ul>
         </div>
       </div>
     </div>
