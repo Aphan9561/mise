@@ -15,6 +15,7 @@ import {
   fallbackDiscoveryRecipes,
   type DiscoveryRecipe,
 } from "@/lib/cooking/discovery";
+import { AddDiscoveryRecipeButton } from "@/app/discover/add-discovery-recipe-button";
 
 type Props = {
   categories: string[];
@@ -292,67 +293,87 @@ export function DiscoverClient({
             </div>
 
             <div className="grid gap-4 p-4 md:grid-cols-2 xl:grid-cols-3">
-              {recipes.map((recipe) => (
-                <Link
-                  key={recipe.id}
-                  href={`/discover/${encodeURIComponent(recipe.id)}`}
-                  className="group block rounded-lg border border-[#e4e8df] bg-white p-4 text-left shadow-sm outline-none ring-[#16806f] transition hover:-translate-y-0.5 hover:border-[#16806f]/40 hover:shadow-md focus-visible:ring-2"
-                >
+              {recipes.map((recipe) => {
+                const detailHref = `/discover/${encodeURIComponent(recipe.id)}`;
+                const canSave =
+                  recipe.ingredients.length > 0 &&
+                  recipe.instructions.length > 0;
+                return (
                   <div
-                    className="mb-4 aspect-[4/3] rounded-md bg-[linear-gradient(135deg,#e7f0ff_0%,#dff5ef_55%,#ffe6d6_100%)] bg-cover bg-center transition group-hover:opacity-95"
-                    style={
-                      recipe.imageUrl
-                        ? { backgroundImage: `url(${recipe.imageUrl})` }
-                        : undefined
-                    }
-                    role={recipe.imageUrl ? "img" : undefined}
-                    aria-label={recipe.imageUrl ? recipe.title : undefined}
-                  />
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-xs font-semibold uppercase text-[#16806f]">
-                        {recipe.cuisine}
-                      </p>
-                      <h2 className="mt-2 font-[family:var(--font-fraunces)] text-2xl text-[#173f3b] group-hover:text-[#0d6b5e]">
-                        {recipe.title}
-                      </h2>
-                    </div>
-                    <span className="inline-flex shrink-0 items-center gap-1 rounded bg-[#eef4ff] px-2 py-1 text-xs font-semibold text-[#164376]">
-                      <Clock3 size={13} aria-hidden="true" />
-                      {recipe.readyInMinutes}
-                    </span>
-                  </div>
-                  <p className="mt-3 line-clamp-3 text-sm leading-6 text-[#59635f]">
-                    {recipe.summary}
-                  </p>
-                  <div className="mt-4 grid gap-3">
-                    <div className="rounded-md bg-[#f5f7f1] p-3">
-                      <div className="flex items-center gap-2 text-sm font-semibold">
-                        <Utensils size={15} aria-hidden="true" />
-                        Ingredients
+                    key={recipe.id}
+                    className="flex flex-col overflow-hidden rounded-lg border border-[#e4e8df] bg-white shadow-sm transition hover:-translate-y-0.5 hover:border-[#16806f]/40 hover:shadow-md"
+                  >
+                    <Link
+                      href={detailHref}
+                      className="group block flex-1 p-4 pb-3 text-left outline-none ring-[#16806f] focus-visible:ring-2"
+                    >
+                      <div
+                        className="mb-4 aspect-[4/3] rounded-md bg-[linear-gradient(135deg,#e7f0ff_0%,#dff5ef_55%,#ffe6d6_100%)] bg-cover bg-center transition group-hover:opacity-95"
+                        style={
+                          recipe.imageUrl
+                            ? { backgroundImage: `url(${recipe.imageUrl})` }
+                            : undefined
+                        }
+                        role={recipe.imageUrl ? "img" : undefined}
+                        aria-label={
+                          recipe.imageUrl ? recipe.title : undefined
+                        }
+                      />
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-xs font-semibold uppercase text-[#16806f]">
+                            {recipe.cuisine}
+                          </p>
+                          <h2 className="mt-2 font-[family:var(--font-fraunces)] text-2xl text-[#173f3b] group-hover:text-[#0d6b5e]">
+                            {recipe.title}
+                          </h2>
+                        </div>
+                        <span className="inline-flex shrink-0 items-center gap-1 rounded bg-[#eef4ff] px-2 py-1 text-xs font-semibold text-[#164376]">
+                          <Clock3 size={13} aria-hidden="true" />
+                          {recipe.readyInMinutes}
+                        </span>
                       </div>
-                      <ul className="mt-2 space-y-1 text-sm text-[#59635f]">
-                        {recipe.ingredients.slice(0, 4).map((ing) => (
-                          <li key={ing}>{ing}</li>
-                        ))}
-                      </ul>
-                    </div>
-                    <div className="rounded-md bg-[#f0f7f5] p-3">
-                      <div className="flex items-center gap-2 text-sm font-semibold text-[#0d6b5e]">
-                        <Sparkles size={15} aria-hidden="true" />
-                        First step
-                      </div>
-                      <p className="mt-2 text-sm leading-6 text-[#315d55]">
-                        {recipe.instructions[0] ??
-                          "Open the recipe for full steps."}
+                      <p className="mt-3 line-clamp-3 text-sm leading-6 text-[#59635f]">
+                        {recipe.summary}
                       </p>
+                      <div className="mt-4 grid gap-3">
+                        <div className="rounded-md bg-[#f5f7f1] p-3">
+                          <div className="flex items-center gap-2 text-sm font-semibold">
+                            <Utensils size={15} aria-hidden="true" />
+                            Ingredients
+                          </div>
+                          <ul className="mt-2 space-y-1 text-sm text-[#59635f]">
+                            {recipe.ingredients.slice(0, 4).map((ing) => (
+                              <li key={ing}>{ing}</li>
+                            ))}
+                          </ul>
+                        </div>
+                        <div className="rounded-md bg-[#f0f7f5] p-3">
+                          <div className="flex items-center gap-2 text-sm font-semibold text-[#0d6b5e]">
+                            <Sparkles size={15} aria-hidden="true" />
+                            First step
+                          </div>
+                          <p className="mt-2 text-sm leading-6 text-[#315d55]">
+                            {recipe.instructions[0] ??
+                              "Open the recipe for full steps."}
+                          </p>
+                        </div>
+                      </div>
+                      <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-[#16806f] opacity-0 transition group-hover:opacity-100">
+                        View recipe →
+                      </p>
+                    </Link>
+                    <div className="border-t border-[#e8efe9] bg-[#fafbf9] px-4 py-3">
+                      <AddDiscoveryRecipeButton
+                        key={recipe.id}
+                        discoveryId={recipe.id}
+                        variant="card"
+                        disabled={!canSave}
+                      />
                     </div>
                   </div>
-                  <p className="mt-4 text-xs font-semibold uppercase tracking-wide text-[#16806f] opacity-0 transition group-hover:opacity-100">
-                    View recipe →
-                  </p>
-                </Link>
-              ))}
+                );
+              })}
             </div>
           </section>
         </div>

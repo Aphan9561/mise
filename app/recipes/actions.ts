@@ -9,10 +9,12 @@ import {
   updateUserRecipe,
 } from "@/lib/supabase/recipes";
 import { importRecipeFromUrl } from "@/lib/cooking/import-url";
+import { getDiscoveryRecipeDetail } from "@/lib/cooking/themealdb";
 
 export type RecipeActionState = {
   status: "idle" | "success" | "error";
   message: string;
+  newRecipeId?: string;
 };
 
 function splitLines(value: FormDataEntryValue | null) {
@@ -52,6 +54,93 @@ function formatRecipeError(error: unknown) {
   return message.includes('relation "recipes" does not exist')
     ? "Create or update the recipes table by running supabase/schema.sql first."
     : message;
+}
+
+function themealdbMealUrl(discoveryId: string): string | null {
+  if (discoveryId.startsWith("fallback-")) {
+    return null;
+  }
+  return `https://www.themealdb.com/meal.php?i=${encodeURIComponent(discoveryId)}`;
+}
+
+export async function addDiscoveryRecipeAction(
+  _previousState: RecipeActionState,
+  formData: FormData,
+): Promise<RecipeActionState> {
+  const { userId } = await auth();
+
+  if (!userId) {
+    return {
+      status: "error",
+      message: "You need to be signed in to save recipes.",
+    };
+  }
+
+  const discoveryId = String(formData.get("discoveryId") ?? "").trim();
+
+  if (!discoveryId) {
+    return {
+      status: "error",
+      message: "Missing recipe.",
+    };
+  }
+
+  const detail = await getDiscoveryRecipeDetail(discoveryId);
+
+  if (!detail) {
+    return {
+      status: "error",
+      message: "Could not load that recipe. Try again from the discover page.",
+    };
+  }
+
+  if (detail.ingredients.length === 0 || detail.instructions.length === 0) {
+    return {
+      status: "error",
+      message:
+        "This recipe is missing ingredients or steps, so it cannot be saved.",
+    };
+  }
+
+  const description =
+    detail.summary.trim().slice(0, 2000) ||
+    `Saved from Discover: ${detail.title}`;
+
+  const notesParts = ["Added from Discover"];
+  if (detail.category) {
+    notesParts.push(detail.category);
+  }
+
+  try {
+    const saved = await createUserRecipe({
+      clerkUserId: userId,
+      title: detail.title,
+      description,
+      cuisine: detail.cuisine,
+      prepMinutes: detail.readyInMinutes,
+      ingredients: detail.ingredients,
+      instructions: detail.instructions,
+      imageUrl: detail.imageUrl?.trim() || null,
+      notes: notesParts.join(" · "),
+      source: discoveryId.startsWith("fallback-") ? "discover" : "themealdb",
+      sourceUrl: detail.sourceUrl?.trim() || themealdbMealUrl(discoveryId),
+    });
+
+    revalidatePath("/recipes");
+    revalidatePath("/kitchen");
+    revalidatePath("/discover");
+
+    return {
+      status: "success",
+      message: `Saved ${detail.title} to your recipes.`,
+      newRecipeId: saved.id,
+    };
+  } catch (error) {
+    return {
+      status: "error",
+      message: `Could not save recipe: ${formatRecipeError(error)}`,
+    };
+  }
 }
 
 export async function createRecipeAction(

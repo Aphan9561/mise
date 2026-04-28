@@ -1,5 +1,6 @@
 import type { DiscoveryRecipeDetail } from "@/lib/cooking/discovery";
 import { Clock3, ExternalLink, Utensils, Video } from "lucide-react";
+import { AddDiscoveryRecipeButton } from "@/app/discover/add-discovery-recipe-button";
 
 type Props = {
   recipe: DiscoveryRecipeDetail;
@@ -58,6 +59,14 @@ export function DiscoverRecipeDetail({ recipe }: Props) {
       </div>
 
       <p className="mt-6 text-base leading-7 text-[#3d4a45]">{recipe.summary}</p>
+
+      <AddDiscoveryRecipeButton
+        discoveryId={recipe.id}
+        variant="detail"
+        disabled={
+          recipe.ingredients.length === 0 || recipe.instructions.length === 0
+        }
+      />
 
       <section className="mt-10 rounded-2xl border border-[#e4e8df] bg-white p-6">
         <h2 className="flex items-center gap-2 font-[family:var(--font-fraunces)] text-2xl text-[#173f3b]">
