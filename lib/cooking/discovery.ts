@@ -40,17 +40,21 @@ function extractTheMealDbIngredients(meal: TheMealDbMeal): string[] {
   return out;
 }
 
-function extractTheMealDbInstructionSteps(text: string | null | undefined): string[] {
+function extractTheMealDbInstructionSteps(
+  text: string | null | undefined,
+  maxLines?: number,
+): string[] {
   if (!text) return [];
-  return text
+  const lines = text
     .split(/\r\n|\n/)
     .map((line) =>
       line
         .replace(/^(step\s*\d+[:.)-]?\s*)/i, "")
         .trim(),
     )
-    .filter(Boolean)
-    .slice(0, 12);
+    .filter(Boolean);
+  if (maxLines != null) return lines.slice(0, maxLines);
+  return lines;
 }
 
 function theMealDbSummary(meal: TheMealDbMeal): string {
@@ -75,7 +79,33 @@ export function mapTheMealDbToDiscoveryRecipe(meal: TheMealDbMeal): DiscoveryRec
     summary: theMealDbSummary(meal),
     imageUrl: meal.strMealThumb?.trim() ?? "",
     ingredients: extractTheMealDbIngredients(meal),
+    instructions: extractTheMealDbInstructionSteps(meal.strInstructions, 12),
+  };
+}
+
+export type DiscoveryRecipeDetail = DiscoveryRecipe & {
+  category: string | null;
+  youtubeUrl: string | null;
+  sourceUrl: string | null;
+};
+
+export function mapTheMealDbToDiscoveryDetail(meal: TheMealDbMeal): DiscoveryRecipeDetail {
+  const base = mapTheMealDbToDiscoveryRecipe(meal);
+  return {
+    ...base,
     instructions: extractTheMealDbInstructionSteps(meal.strInstructions),
+    category: meal.strCategory?.trim() ?? null,
+    youtubeUrl: meal.strYoutube?.trim() ?? null,
+    sourceUrl: meal.strSource?.trim() ?? null,
+  };
+}
+
+export function fallbackRecipeToDetail(recipe: DiscoveryRecipe): DiscoveryRecipeDetail {
+  return {
+    ...recipe,
+    category: null,
+    youtubeUrl: null,
+    sourceUrl: null,
   };
 }
 

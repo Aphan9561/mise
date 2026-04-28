@@ -1,7 +1,25 @@
 import Link from "next/link";
+import { auth } from "@clerk/nextjs/server";
+import {
+  getDiscoveryPageInitialData,
+  listTheMealDbAreas,
+  listTheMealDbCategories,
+} from "@/lib/cooking/themealdb";
 import { DiscoverClient } from "@/app/discover/discover-client";
 
-export default function DiscoverPage() {
+export default async function DiscoverPage() {
+  const { userId } = await auth();
+
+  if (!userId) {
+    return null;
+  }
+
+  const [categories, areas, initial] = await Promise.all([
+    listTheMealDbCategories(),
+    listTheMealDbAreas(),
+    getDiscoveryPageInitialData(),
+  ]);
+
   return (
     <main className="min-h-screen bg-[#f6f7f1] text-[#18211f]">
       <header className="border-b border-[#d8ddd4] bg-white">
@@ -17,7 +35,12 @@ export default function DiscoverPage() {
           </h1>
         </div>
       </header>
-      <DiscoverClient />
+      <DiscoverClient
+        categories={categories}
+        areas={areas}
+        initialRecipes={initial.recipes}
+        initialSource={initial.source}
+      />
     </main>
   );
 }
