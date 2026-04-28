@@ -1,7 +1,28 @@
 "use client";
 
-import { useMemo, useState, type FormEvent } from "react";
-import { Bot, Clock3, ExternalLink, Loader2, Send, Sparkles } from "lucide-react";
+import {
+  useActionState,
+  useEffect,
+  useMemo,
+  useState,
+  type FormEvent,
+} from "react";
+import { useRouter } from "next/navigation";
+import {
+  Bot,
+  Clock3,
+  ExternalLink,
+  Loader2,
+  Pencil,
+  Save,
+  Send,
+  Sparkles,
+  X,
+} from "lucide-react";
+import {
+  updateRecipeAction,
+  type RecipeActionState,
+} from "@/app/recipes/actions";
 import { techniqueTerms } from "@/lib/cooking/techniques";
 import type { UserRecipe } from "@/lib/supabase/recipes";
 
@@ -19,6 +40,11 @@ type TechniqueState = {
 type ChatMessage = {
   role: "user" | "assistant";
   content: string;
+};
+
+const initialEditState: RecipeActionState = {
+  status: "idle",
+  message: "",
 };
 
 function escapeRegex(value: string) {
@@ -46,10 +72,16 @@ function useTechniquePattern() {
 }
 
 export function RecipeDetailClient({ recipe }: RecipeDetailClientProps) {
+  const router = useRouter();
   const techniquePattern = useTechniquePattern();
   const [technique, setTechnique] = useState<TechniqueState | null>(null);
   const [isTechniqueLoading, setIsTechniqueLoading] = useState(false);
   const [isAssistantOpen, setIsAssistantOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editState, editAction, isSavingEdit] = useActionState(
+    updateRecipeAction,
+    initialEditState,
+  );
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
     {
       role: "assistant",
@@ -59,6 +91,12 @@ export function RecipeDetailClient({ recipe }: RecipeDetailClientProps) {
   ]);
   const [question, setQuestion] = useState("");
   const [isChatLoading, setIsChatLoading] = useState(false);
+
+  useEffect(() => {
+    if (editState.status === "success") {
+      router.refresh();
+    }
+  }, [editState.status, router]);
 
   async function explainTechnique(term: string, context: string) {
     setIsTechniqueLoading(true);
@@ -179,13 +217,37 @@ export function RecipeDetailClient({ recipe }: RecipeDetailClientProps) {
     <>
       <div className="mx-auto grid max-w-6xl gap-5 px-4 py-5 sm:px-6 lg:grid-cols-[0.8fr_1.2fr]">
         <section className="rounded-lg border border-[#d8ddd4] bg-white">
+          <div
+            className="aspect-[16/10] rounded-t-lg bg-[linear-gradient(135deg,#e7f0ff_0%,#dff5ef_55%,#ffe6d6_100%)] bg-cover bg-center"
+            style={
+              recipe.image_url
+                ? { backgroundImage: `url(${recipe.image_url})` }
+                : undefined
+            }
+            role={recipe.image_url ? "img" : undefined}
+            aria-label={recipe.image_url ? recipe.title : undefined}
+          />
           <div className="border-b border-[#e4e8df] px-5 py-5">
             <p className="text-xs font-semibold uppercase text-[#16806f]">
               {recipe.cuisine ?? recipe.source}
             </p>
-            <h1 className="mt-2 font-[family:var(--font-fraunces)] text-4xl text-[#173f3b]">
-              {recipe.title}
-            </h1>
+            <div className="mt-2 flex items-start justify-between gap-3">
+              <h1 className="font-[family:var(--font-fraunces)] text-4xl text-[#173f3b]">
+                {recipe.title}
+              </h1>
+              <button
+                type="button"
+                onClick={() => setIsEditing((current) => !current)}
+                className="inline-flex shrink-0 items-center gap-2 rounded-md border border-[#cfd8cf] px-3 py-2 text-sm font-semibold hover:bg-[#f1f5ee]"
+              >
+                {isEditing ? (
+                  <X size={16} aria-hidden="true" />
+                ) : (
+                  <Pencil size={16} aria-hidden="true" />
+                )}
+                {isEditing ? "Close" : "Edit"}
+              </button>
+            </div>
             {recipe.description ? (
               <p className="mt-3 text-sm leading-6 text-[#59635f]">
                 {recipe.description}
@@ -209,6 +271,100 @@ export function RecipeDetailClient({ recipe }: RecipeDetailClientProps) {
               ) : null}
             </div>
           </div>
+
+          {isEditing ? (
+            <form action={editAction} className="space-y-3 border-b border-[#e4e8df] p-5">
+              <input name="recipeId" type="hidden" value={recipe.id} />
+              <label className="block text-sm font-medium">
+                Title
+                <input
+                  name="title"
+                  required
+                  defaultValue={recipe.title}
+                  className="mt-1 w-full rounded-md border border-[#cfd8cf] bg-white px-3 py-2 text-sm outline-none focus:border-[#16806f]"
+                />
+              </label>
+              <label className="block text-sm font-medium">
+                Short note
+                <input
+                  name="description"
+                  defaultValue={recipe.description ?? ""}
+                  className="mt-1 w-full rounded-md border border-[#cfd8cf] bg-white px-3 py-2 text-sm outline-none focus:border-[#16806f]"
+                />
+              </label>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <label className="block text-sm font-medium">
+                  Cuisine
+                  <input
+                    name="cuisine"
+                    defaultValue={recipe.cuisine ?? ""}
+                    className="mt-1 w-full rounded-md border border-[#cfd8cf] bg-white px-3 py-2 text-sm outline-none focus:border-[#16806f]"
+                  />
+                </label>
+                <label className="block text-sm font-medium">
+                  Minutes
+                  <input
+                    name="prepMinutes"
+                    type="number"
+                    min="1"
+                    defaultValue={recipe.prep_minutes ?? ""}
+                    className="mt-1 w-full rounded-md border border-[#cfd8cf] bg-white px-3 py-2 text-sm outline-none focus:border-[#16806f]"
+                  />
+                </label>
+              </div>
+              <label className="block text-sm font-medium">
+                Image URL
+                <input
+                  name="imageUrl"
+                  type="url"
+                  defaultValue={recipe.image_url ?? ""}
+                  className="mt-1 w-full rounded-md border border-[#cfd8cf] bg-white px-3 py-2 text-sm outline-none focus:border-[#16806f]"
+                  placeholder="https://example.com/photo.jpg"
+                />
+              </label>
+              <label className="block text-sm font-medium">
+                Ingredients
+                <textarea
+                  name="ingredients"
+                  required
+                  defaultValue={recipe.ingredients.join("\n")}
+                  className="mt-1 h-36 w-full resize-none rounded-md border border-[#cfd8cf] bg-white px-3 py-2 text-sm outline-none focus:border-[#16806f]"
+                />
+              </label>
+              <label className="block text-sm font-medium">
+                Instructions
+                <textarea
+                  name="instructions"
+                  required
+                  defaultValue={recipe.instructions.join("\n")}
+                  className="mt-1 h-44 w-full resize-none rounded-md border border-[#cfd8cf] bg-white px-3 py-2 text-sm outline-none focus:border-[#16806f]"
+                />
+              </label>
+              <button
+                type="submit"
+                disabled={isSavingEdit}
+                className="inline-flex items-center gap-2 rounded-md bg-[#173f3b] px-4 py-2.5 text-sm font-semibold text-white hover:bg-[#245c56] disabled:bg-[#aab3ad]"
+              >
+                {isSavingEdit ? (
+                  <Loader2 className="animate-spin" size={16} aria-hidden="true" />
+                ) : (
+                  <Save size={16} aria-hidden="true" />
+                )}
+                Save edits
+              </button>
+              {editState.message ? (
+                <p
+                  className={`rounded-md px-3 py-2 text-sm ${
+                    editState.status === "success"
+                      ? "bg-[#e7f6eb] text-[#27683b]"
+                      : "bg-[#fde9e5] text-[#8d2f21]"
+                  }`}
+                >
+                  {editState.message}
+                </p>
+              ) : null}
+            </form>
+          ) : null}
 
           <div className="p-5">
             <h2 className="font-semibold">Ingredients</h2>

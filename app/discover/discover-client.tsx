@@ -82,6 +82,16 @@ export function DiscoverClient() {
               key={recipe.id}
               className="rounded-lg border border-[#e4e8df] bg-white p-4"
             >
+              <div
+                className="mb-4 aspect-[4/3] rounded-md bg-[linear-gradient(135deg,#e7f0ff_0%,#dff5ef_55%,#ffe6d6_100%)] bg-cover bg-center"
+                style={
+                  recipe.imageUrl
+                    ? { backgroundImage: `url(${recipe.imageUrl})` }
+                    : undefined
+                }
+                role={recipe.imageUrl ? "img" : undefined}
+                aria-label={recipe.imageUrl ? recipe.title : undefined}
+              />
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="text-xs font-semibold uppercase text-[#16806f]">

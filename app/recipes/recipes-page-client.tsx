@@ -26,6 +26,7 @@ type ImportPreview = {
   description: string;
   cuisine: string;
   prepMinutes: number | null;
+  imageUrl?: string | null;
   ingredients: string[];
   instructions: string[];
 };
@@ -198,6 +199,14 @@ export function RecipesPageClient({
               <input name="recipeUrl" type="hidden" value={recipeUrl} />
               {preview ? (
                 <div className="rounded-md border border-[#d8ddd4] bg-[#f8faf5] p-3">
+                  {preview.imageUrl ? (
+                    <div
+                      className="mb-3 aspect-[4/3] rounded-md bg-cover bg-center"
+                      style={{ backgroundImage: `url(${preview.imageUrl})` }}
+                      role="img"
+                      aria-label={preview.title}
+                    />
+                  ) : null}
                   <p className="text-xs font-semibold uppercase text-[#16806f]">
                     Ready to save
                   </p>
@@ -270,6 +279,15 @@ export function RecipesPageClient({
                 </label>
               </div>
               <label className="block text-sm font-medium">
+                Image URL
+                <input
+                  name="imageUrl"
+                  type="url"
+                  className="mt-1 w-full rounded-md border border-[#cfd8cf] bg-white px-3 py-2 text-sm outline-none focus:border-[#16806f]"
+                  placeholder="https://example.com/photo.jpg"
+                />
+              </label>
+              <label className="block text-sm font-medium">
                 Ingredients
                 <textarea
                   name="ingredients"
@@ -338,25 +356,37 @@ export function RecipesPageClient({
                 <Link
                   key={recipe.id}
                   href={`/recipes/${recipe.id}`}
-                  className="rounded-lg border border-[#e4e8df] p-4 transition hover:-translate-y-0.5 hover:border-[#16806f] hover:shadow-[0_12px_35px_rgba(28,45,39,0.08)]"
+                  className="overflow-hidden rounded-lg border border-[#e4e8df] transition hover:-translate-y-0.5 hover:border-[#16806f] hover:shadow-[0_12px_35px_rgba(28,45,39,0.08)]"
                 >
-                  <p className="text-xs font-semibold uppercase text-[#16806f]">
-                    {recipe.cuisine ?? recipe.source}
-                  </p>
-                  <h3 className="mt-2 line-clamp-2 font-[family:var(--font-fraunces)] text-2xl text-[#173f3b]">
-                    {recipe.title}
-                  </h3>
-                  {recipe.description ? (
-                    <p className="mt-2 line-clamp-3 text-sm leading-6 text-[#59635f]">
-                      {recipe.description}
+                  <div
+                    className="aspect-[4/3] bg-[linear-gradient(135deg,#e7f0ff_0%,#dff5ef_55%,#ffe6d6_100%)] bg-cover bg-center"
+                    style={
+                      recipe.image_url
+                        ? { backgroundImage: `url(${recipe.image_url})` }
+                        : undefined
+                    }
+                    role={recipe.image_url ? "img" : undefined}
+                    aria-label={recipe.image_url ? recipe.title : undefined}
+                  />
+                  <div className="p-4">
+                    <p className="text-xs font-semibold uppercase text-[#16806f]">
+                      {recipe.cuisine ?? recipe.source}
                     </p>
-                  ) : null}
-                  <div className="mt-4 flex items-center justify-between text-sm text-[#66706b]">
-                    <span className="inline-flex items-center gap-1">
-                      <Clock3 size={15} aria-hidden="true" />
-                      {recipe.prep_minutes ?? 30} min
-                    </span>
-                    <span>{recipe.ingredients.length} ingredients</span>
+                    <h3 className="mt-2 line-clamp-2 font-[family:var(--font-fraunces)] text-2xl text-[#173f3b]">
+                      {recipe.title}
+                    </h3>
+                    {recipe.description ? (
+                      <p className="mt-2 line-clamp-3 text-sm leading-6 text-[#59635f]">
+                        {recipe.description}
+                      </p>
+                    ) : null}
+                    <div className="mt-4 flex items-center justify-between text-sm text-[#66706b]">
+                      <span className="inline-flex items-center gap-1">
+                        <Clock3 size={15} aria-hidden="true" />
+                        {recipe.prep_minutes ?? 30} min
+                      </span>
+                      <span>{recipe.ingredients.length} ingredients</span>
+                    </div>
                   </div>
                 </Link>
               ))}

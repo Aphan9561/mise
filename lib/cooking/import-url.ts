@@ -44,6 +44,31 @@ function parseDurationMinutes(value: unknown) {
   return (Number(hours ?? 0) || 0) * 60 + (Number(minutes ?? 0) || 0) || null;
 }
 
+function asImageUrl(value: JsonLdValue | undefined): string {
+  if (typeof value === "string") {
+    return value;
+  }
+
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const image = asImageUrl(item);
+
+      if (image) {
+        return image;
+      }
+    }
+  }
+
+  if (value && typeof value === "object") {
+    const object = value as JsonLdObject;
+    const url = object.url ?? object.contentUrl;
+
+    return typeof url === "string" ? url : "";
+  }
+
+  return "";
+}
+
 function asStringArray(value: JsonLdValue | undefined): string[] {
   if (Array.isArray(value)) {
     return value
@@ -157,6 +182,7 @@ function parseJsonLdRecipe(html: string): ImportedRecipe | null {
           parseDurationMinutes(recipe.prepTime),
         ingredients,
         instructions,
+        imageUrl: asImageUrl(recipe.image) || null,
         source: "url",
       };
     } catch {
@@ -176,6 +202,7 @@ function readJsonObject(value: string) {
     description?: string;
     cuisine?: string;
     prepMinutes?: number;
+    imageUrl?: string;
     ingredients?: string[];
     instructions?: string[];
   };
@@ -187,7 +214,7 @@ async function extractWithAi(url: string, html: string): Promise<ImportedRecipe 
     json: true,
     maxTokens: 900,
     system:
-      "Extract a cooking recipe from webpage text. Return only JSON with title, description, cuisine, prepMinutes, ingredients, and instructions. Ingredients and instructions must be arrays of strings.",
+      "Extract a cooking recipe from webpage text. Return only JSON with title, description, cuisine, prepMinutes, imageUrl, ingredients, and instructions. Ingredients and instructions must be arrays of strings.",
     prompt: `Recipe URL: ${url}\n\nPage text:\n${pageText}`,
   });
 
@@ -215,6 +242,7 @@ async function extractWithAi(url: string, html: string): Promise<ImportedRecipe 
         : null,
       ingredients: parsed.ingredients.map(String).filter(Boolean),
       instructions: parsed.instructions.map(String).filter(Boolean),
+      imageUrl: parsed.imageUrl?.trim() ?? null,
       source: "url",
     };
   } catch {

@@ -37,9 +37,9 @@ This repo uses:
 - Spoonacular recipe search for discovery
 
 The protected recipe pages store personal recipes in the `recipes` table. URL
-imports first look for structured recipe data on the page, then fall back to the
-configured AI provider when needed. Create or update the tables by running the
-SQL in `supabase/schema.sql`.
+imports first look for structured recipe data on the page, including recipe
+photos when available, then fall back to the configured AI provider when needed.
+Create or update the tables by running the SQL in `supabase/schema.sql`.
 
 ## Stack
 
@@ -53,7 +53,7 @@ SQL in `supabase/schema.sql`.
 - `app/page.tsx` contains the cooking-themed landing page
 - `app/recipes/page.tsx` lists saved recipes and contains manual/URL add flows
 - `app/recipes/[id]/page.tsx` contains the individual recipe cook view and
-  assistant button
+  assistant button, plus the edit flow for saved recipes
 - `app/discover/page.tsx` contains the Spoonacular-backed discovery page
 - `app/api/*` contains the technique help, assistant, and discovery endpoints
 - `app/layout.tsx` defines app metadata and typography

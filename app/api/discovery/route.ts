@@ -12,6 +12,7 @@ type SpoonacularRecipe = {
   cuisines?: string[];
   readyInMinutes?: number;
   summary?: string;
+  image?: string;
   extendedIngredients?: { original?: string; name?: string }[];
   analyzedInstructions?: { steps?: { step?: string }[] }[];
 };
@@ -27,6 +28,7 @@ function mapSpoonacularRecipe(recipe: SpoonacularRecipe): DiscoveryRecipe {
     cuisine: recipe.cuisines?.[0] ?? "Recommended",
     readyInMinutes: recipe.readyInMinutes ?? 30,
     summary: stripHtml(recipe.summary ?? "A recommended recipe to try."),
+    imageUrl: recipe.image ?? "",
     ingredients:
       recipe.extendedIngredients
         ?.map((ingredient) => ingredient.original ?? ingredient.name ?? "")

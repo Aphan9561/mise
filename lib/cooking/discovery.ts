@@ -4,6 +4,7 @@ export type DiscoveryRecipe = {
   cuisine: string;
   readyInMinutes: number;
   summary: string;
+  imageUrl?: string;
   ingredients: string[];
   instructions: string[];
 };
@@ -15,6 +16,7 @@ export const fallbackDiscoveryRecipes: DiscoveryRecipe[] = [
     cuisine: "Japanese-inspired",
     readyInMinutes: 20,
     summary: "A fast pantry dinner with chewy noodles and a savory peanut sauce.",
+    imageUrl: "",
     ingredients: [
       "8 oz noodles",
       "2 tbsp miso",
@@ -36,6 +38,7 @@ export const fallbackDiscoveryRecipes: DiscoveryRecipe[] = [
     cuisine: "Weeknight",
     readyInMinutes: 18,
     summary: "Soft eggs simmered in a bright tomato sauce with toast for scooping.",
+    imageUrl: "",
     ingredients: [
       "1 can crushed tomatoes",
       "4 eggs",
@@ -57,6 +60,7 @@ export const fallbackDiscoveryRecipes: DiscoveryRecipe[] = [
     cuisine: "Mediterranean",
     readyInMinutes: 25,
     summary: "Crispy chickpeas, lemony yogurt, and greens in one skillet.",
+    imageUrl: "",
     ingredients: [
       "1 can chickpeas",
       "Greek yogurt",

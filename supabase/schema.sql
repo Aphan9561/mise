@@ -36,6 +36,7 @@ create table if not exists public.recipes (
   prep_minutes integer,
   ingredients text[] not null default '{}',
   instructions text[] not null default '{}',
+  image_url text,
   source text not null default 'personal',
   source_url text,
   created_at timestamptz not null default now(),
@@ -44,6 +45,9 @@ create table if not exists public.recipes (
 
 alter table public.recipes
 add column if not exists source_url text;
+
+alter table public.recipes
+add column if not exists image_url text;
 
 create index if not exists recipes_clerk_user_id_idx
 on public.recipes (clerk_user_id);

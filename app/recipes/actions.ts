@@ -2,7 +2,7 @@
 
 import { auth } from "@clerk/nextjs/server";
 import { revalidatePath } from "next/cache";
-import { createUserRecipe } from "@/lib/supabase/recipes";
+import { createUserRecipe, updateUserRecipe } from "@/lib/supabase/recipes";
 import { importRecipeFromUrl } from "@/lib/cooking/import-url";
 
 export type RecipeActionState = {
@@ -21,6 +21,24 @@ function readPrepMinutes(value: FormDataEntryValue | null) {
   const parsed = Number(value);
 
   return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
+function readOptionalUrl(value: FormDataEntryValue | null) {
+  const rawValue = String(value ?? "").trim();
+
+  if (!rawValue) {
+    return null;
+  }
+
+  try {
+    const url = new URL(rawValue);
+
+    return url.protocol === "http:" || url.protocol === "https:"
+      ? url.toString()
+      : null;
+  } catch {
+    return null;
+  }
 }
 
 function formatRecipeError(error: unknown) {
@@ -64,6 +82,7 @@ export async function createRecipeAction(
       prepMinutes: readPrepMinutes(formData.get("prepMinutes")),
       ingredients,
       instructions,
+      imageUrl: readOptionalUrl(formData.get("imageUrl")),
       source: String(formData.get("source") ?? "personal"),
       sourceUrl: String(formData.get("sourceUrl") ?? "").trim() || null,
     });
@@ -116,6 +135,7 @@ export async function importRecipeFromUrlAction(
       prepMinutes: recipe.prepMinutes,
       ingredients: recipe.ingredients,
       instructions: recipe.instructions,
+      imageUrl: recipe.imageUrl,
       source: "url",
       sourceUrl: recipe.sourceUrl,
     });
@@ -131,6 +151,59 @@ export async function importRecipeFromUrlAction(
     return {
       status: "error",
       message: `Could not import recipe: ${formatRecipeError(error)}`,
+    };
+  }
+}
+
+export async function updateRecipeAction(
+  _previousState: RecipeActionState,
+  formData: FormData,
+): Promise<RecipeActionState> {
+  const { userId } = await auth();
+
+  if (!userId) {
+    return {
+      status: "error",
+      message: "You need to be signed in before editing a recipe.",
+    };
+  }
+
+  const recipeId = String(formData.get("recipeId") ?? "").trim();
+  const title = String(formData.get("title") ?? "").trim();
+  const ingredients = splitLines(formData.get("ingredients"));
+  const instructions = splitLines(formData.get("instructions"));
+
+  if (!recipeId || !title || ingredients.length === 0 || instructions.length === 0) {
+    return {
+      status: "error",
+      message: "Keep a title, at least one ingredient, and at least one step.",
+    };
+  }
+
+  try {
+    await updateUserRecipe({
+      clerkUserId: userId,
+      recipeId,
+      title,
+      description: String(formData.get("description") ?? "").trim(),
+      cuisine: String(formData.get("cuisine") ?? "").trim(),
+      prepMinutes: readPrepMinutes(formData.get("prepMinutes")),
+      ingredients,
+      instructions,
+      imageUrl: readOptionalUrl(formData.get("imageUrl")),
+    });
+
+    revalidatePath("/recipes");
+    revalidatePath(`/recipes/${recipeId}`);
+
+    return {
+      status: "success",
+      message: "Recipe updated.",
+    };
+  } catch (error) {
+    return {
+      status: "error",
+      message: `Could not update recipe: ${formatRecipeError(error)}`,
     };
   }
 }

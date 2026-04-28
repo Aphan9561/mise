@@ -9,6 +9,7 @@ export type UserRecipe = {
   prep_minutes: number | null;
   ingredients: string[];
   instructions: string[];
+  image_url: string | null;
   source: string;
   source_url: string | null;
   created_at: string;
@@ -29,8 +30,21 @@ export type CreateRecipeInput = {
   prepMinutes: number | null;
   ingredients: string[];
   instructions: string[];
+  imageUrl?: string | null;
   source?: string;
   sourceUrl?: string | null;
+};
+
+export type UpdateRecipeInput = {
+  clerkUserId: string;
+  recipeId: string;
+  title: string;
+  description: string;
+  cuisine: string;
+  prepMinutes: number | null;
+  ingredients: string[];
+  instructions: string[];
+  imageUrl?: string | null;
 };
 
 function isMissingTableError(message: string) {
@@ -94,9 +108,36 @@ export async function createUserRecipe(input: CreateRecipeInput) {
       prep_minutes: input.prepMinutes,
       ingredients: input.ingredients,
       instructions: input.instructions,
+      image_url: input.imageUrl ?? null,
       source: input.source ?? "personal",
       source_url: input.sourceUrl ?? null,
     })
+    .select()
+    .single<UserRecipe>();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}
+
+export async function updateUserRecipe(input: UpdateRecipeInput) {
+  const supabase = createAdminSupabaseClient();
+
+  const { data, error } = await supabase
+    .from("recipes")
+    .update({
+      title: input.title,
+      description: input.description || null,
+      cuisine: input.cuisine || null,
+      prep_minutes: input.prepMinutes,
+      ingredients: input.ingredients,
+      instructions: input.instructions,
+      image_url: input.imageUrl ?? null,
+    })
+    .eq("id", input.recipeId)
+    .eq("clerk_user_id", input.clerkUserId)
     .select()
     .single<UserRecipe>();
 

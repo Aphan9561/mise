@@ -100,6 +100,7 @@ const demoRecipe: UserRecipe = {
     "Deglaze with pasta water, fold in the pasta, and finish with basil.",
   ],
   source: "demo",
+  image_url: null,
   source_url: null,
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),
