@@ -25,7 +25,7 @@ export async function POST(request: Request) {
   const result = await generateCookingText({
     maxTokens: 180,
     system:
-      "You are a concise cooking instructor. Explain technique terms for a home cook in two short sentences, then give one visual or sensory cue.",
+      "You are a concise cooking instructor. Explain a technique term to a home cook in two short sentences. Reply in plain text only — no markdown, no bold or italics, no headers, and no labels like 'Definition:' or 'The Cue:'. Do not add a separate cue line; only explain the technique.",
     prompt: `Explain "${term}" in this recipe context: ${body.context ?? "No context provided."}`,
   });
 

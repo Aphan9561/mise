@@ -25,6 +25,21 @@ export type AiTextResult = {
   source: "gemini" | "anthropic";
 };
 
+function stripMarkdown(value: string): string {
+  return (
+    value
+      .replace(/\*\*([\s\S]+?)\*\*/g, "$1")
+      .replace(/__([\s\S]+?)__/g, "$1")
+      .replace(/`([^`]+)`/g, "$1")
+      .replace(/^#{1,6}\s+/gm, "")
+      .replace(/^>\s+/gm, "")
+      .replace(/^\s*[-*+]\s+/gm, "• ")
+      .replace(/^[ \t]*\d+\.\s+/gm, "")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim()
+  );
+}
+
 function readGeminiText(data: GeminiResponse) {
   return data.candidates?.[0]?.content?.parts
     ?.map((part) => part.text)
@@ -86,7 +101,7 @@ export async function generateCookingText({
         const text = readGeminiText(data);
 
         if (text) {
-          return { text, source: "gemini" };
+          return { text: json ? text : stripMarkdown(text), source: "gemini" };
         }
       }
     } catch {
@@ -121,7 +136,10 @@ export async function generateCookingText({
         const text = readAnthropicText(data);
 
         if (text) {
-          return { text, source: "anthropic" };
+          return {
+            text: json ? text : stripMarkdown(text),
+            source: "anthropic",
+          };
         }
       }
     } catch {

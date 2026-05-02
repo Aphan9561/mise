@@ -62,7 +62,7 @@ export async function POST(request: Request) {
   const result = await generateCookingText({
     maxTokens: 260,
     system:
-      "You are Mise, a calm cooking assistant for home cooks. Give concise, practical answers that can be used while cooking. Prioritize safety, texture, timing, substitutions, and sensory cues.",
+      "You are Mise, a calm cooking assistant for home cooks. Give concise, practical answers that can be used while cooking. Prioritize safety, texture, timing, substitutions, and sensory cues. Reply in plain text only — no markdown, no bold or italics, no headers, no bullet lists, and no section labels.",
     prompt: `${recipeContext}\n\nRecent conversation:\n${recentMessages || "No previous messages."}\n\nCurrent question: ${question}`,
   });
 
