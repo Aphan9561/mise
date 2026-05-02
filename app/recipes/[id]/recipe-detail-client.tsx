@@ -3,7 +3,6 @@
 import {
   useActionState,
   useEffect,
-  useMemo,
   useState,
   type FormEvent,
 } from "react";
@@ -18,7 +17,6 @@ import {
   Pencil,
   Save,
   Send,
-  Sparkles,
   X,
 } from "lucide-react";
 import {
@@ -27,18 +25,14 @@ import {
   type RecipeActionState,
 } from "@/app/recipes/actions";
 import { AddToGrocery } from "@/app/recipes/[id]/add-to-grocery";
-import { techniqueTerms } from "@/lib/cooking/techniques";
+import {
+  TechniquePopover,
+  useTechniqueHighlighter,
+} from "@/app/recipes/[id]/technique-highlighter";
 import type { UserRecipe } from "@/lib/supabase/recipes";
 
 type RecipeDetailClientProps = {
   recipe: UserRecipe;
-};
-
-type TechniqueState = {
-  term: string;
-  explanation: string;
-  cue: string;
-  source: string;
 };
 
 type ChatMessage = {
@@ -51,35 +45,15 @@ const initialEditState: RecipeActionState = {
   message: "",
 };
 
-function escapeRegex(value: string) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-function normalizeTechniqueTerm(value: string) {
-  const lowerValue = value.toLowerCase();
-
-  return (
-    techniqueTerms.find((term) => lowerValue.startsWith(term.toLowerCase())) ??
-    value
-  );
-}
-
-function useTechniquePattern() {
-  return useMemo(() => {
-    const terms = [...techniqueTerms]
-      .sort((a, b) => b.length - a.length)
-      .map(escapeRegex)
-      .join("|");
-
-    return new RegExp(`\\b(${terms})(?:s|ed|ing)?\\b`, "gi");
-  }, []);
-}
-
 export function RecipeDetailClient({ recipe }: RecipeDetailClientProps) {
   const router = useRouter();
-  const techniquePattern = useTechniquePattern();
-  const [technique, setTechnique] = useState<TechniqueState | null>(null);
-  const [isTechniqueLoading, setIsTechniqueLoading] = useState(false);
+  const {
+    technique,
+    isLoading: isTechniqueLoading,
+    anchor: techniqueAnchor,
+    renderStepText,
+    closeTechnique,
+  } = useTechniqueHighlighter();
   const [isAssistantOpen, setIsAssistantOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [deleteConfirmed, setDeleteConfirmed] = useState(false);
@@ -102,44 +76,6 @@ export function RecipeDetailClient({ recipe }: RecipeDetailClientProps) {
       router.refresh();
     }
   }, [editState.status, router]);
-
-  async function explainTechnique(term: string, context: string) {
-    setIsTechniqueLoading(true);
-    setTechnique({
-      term,
-      explanation: "Checking this technique in context...",
-      cue: "",
-      source: "assistant",
-    });
-
-    try {
-      const response = await fetch("/api/technique", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ term, context }),
-      });
-      const data = (await response.json()) as TechniqueState;
-
-      setTechnique({
-        term,
-        explanation: data.explanation,
-        cue: data.cue,
-        source: data.source,
-      });
-    } catch {
-      setTechnique({
-        term,
-        explanation:
-          "I could not fetch an explanation. Use color, smell, texture, and heat level as your cues.",
-        cue: "Try again in a moment.",
-        source: "local",
-      });
-    } finally {
-      setIsTechniqueLoading(false);
-    }
-  }
 
   async function sendQuestion(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -189,33 +125,6 @@ export function RecipeDetailClient({ recipe }: RecipeDetailClientProps) {
     } finally {
       setIsChatLoading(false);
     }
-  }
-
-  function renderStepText(step: string) {
-    const segments = step.split(techniquePattern);
-
-    return segments.map((segment, index) => {
-      const isTechnique = techniquePattern.test(segment);
-      techniquePattern.lastIndex = 0;
-
-      if (!isTechnique) {
-        return <span key={`${segment}-${index}`}>{segment}</span>;
-      }
-
-      const normalizedTerm = normalizeTechniqueTerm(segment);
-
-      return (
-        <button
-          key={`${segment}-${index}`}
-          type="button"
-          onClick={() => explainTechnique(normalizedTerm, step)}
-          className="mx-0.5 rounded-md bg-mise-technique px-1.5 py-0.5 font-semibold text-mise-technique-text underline-offset-2 hover:bg-mise-technique-hover hover:underline"
-          title={`Explain ${normalizedTerm}`}
-        >
-          {segment}
-        </button>
-      );
-    });
   }
 
   return (
@@ -458,40 +367,14 @@ export function RecipeDetailClient({ recipe }: RecipeDetailClientProps) {
           </ol>
         </section>
 
-        {technique ? (
-          <section className="mise-card rounded-2xl p-6 lg:col-span-2">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <Sparkles
-                  size={17}
-                  className="text-mise-accent"
-                  aria-hidden="true"
-                />
-                <h2 className="font-semibold capitalize text-mise-ink">
-                  {technique.term}
-                </h2>
-              </div>
-              <span className="rounded-full bg-mise-chip px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wide text-mise-chip-text">
-                {technique.source}
-              </span>
-            </div>
-            <p className="mt-4 text-sm leading-relaxed text-mise-muted">
-              {technique.explanation}
-            </p>
-            {technique.cue ? (
-              <p className="mt-4 rounded-xl border border-mise-accent/20 bg-mise-surface-soft px-4 py-3 text-sm text-mise-accent">
-                {technique.cue}
-              </p>
-            ) : null}
-            {isTechniqueLoading ? (
-              <p className="mt-4 inline-flex items-center gap-2 text-xs font-semibold text-mise-muted">
-                <Loader2 className="animate-spin" size={14} aria-hidden="true" />
-                Asking assistant
-              </p>
-            ) : null}
-          </section>
-        ) : null}
       </div>
+
+      <TechniquePopover
+        technique={technique}
+        isLoading={isTechniqueLoading}
+        anchor={techniqueAnchor}
+        onClose={closeTechnique}
+      />
 
       <button
         type="button"

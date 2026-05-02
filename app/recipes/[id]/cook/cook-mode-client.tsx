@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  useEffect,
-  useMemo,
-  useState,
-  type FormEvent,
-  type ReactNode,
-} from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import {
   Bot,
@@ -15,21 +9,16 @@ import {
   Loader2,
   PartyPopper,
   Send,
-  Sparkles,
   X,
 } from "lucide-react";
-import { techniqueTerms } from "@/lib/cooking/techniques";
+import {
+  TechniquePopover,
+  useTechniqueHighlighter,
+} from "@/app/recipes/[id]/technique-highlighter";
 import type { UserRecipe } from "@/lib/supabase/recipes";
 
 type Props = {
   recipe: UserRecipe;
-};
-
-type TechniqueState = {
-  term: string;
-  explanation: string;
-  cue: string;
-  source: string;
 };
 
 type ChatMessage = {
@@ -37,37 +26,18 @@ type ChatMessage = {
   content: string;
 };
 
-function escapeRegex(value: string) {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-function normalizeTechniqueTerm(value: string) {
-  const lowerValue = value.toLowerCase();
-
-  return (
-    techniqueTerms.find((term) => lowerValue.startsWith(term.toLowerCase())) ??
-    value
-  );
-}
-
-function useTechniquePattern() {
-  return useMemo(() => {
-    const terms = [...techniqueTerms]
-      .sort((a, b) => b.length - a.length)
-      .map(escapeRegex)
-      .join("|");
-
-    return new RegExp(`\\b(${terms})(?:s|ed|ing)?\\b`, "gi");
-  }, []);
-}
-
 export function CookModeClient({ recipe }: Props) {
   const steps = recipe.instructions;
   const totalSteps = steps.length;
 
+  const {
+    technique,
+    isLoading: isTechniqueLoading,
+    anchor: techniqueAnchor,
+    renderStepText,
+    closeTechnique,
+  } = useTechniqueHighlighter();
   const [stepIndex, setStepIndex] = useState(0);
-  const [technique, setTechnique] = useState<TechniqueState | null>(null);
-  const [isTechniqueLoading, setIsTechniqueLoading] = useState(false);
   const [isAssistantOpen, setIsAssistantOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
     {
@@ -78,8 +48,6 @@ export function CookModeClient({ recipe }: Props) {
   ]);
   const [question, setQuestion] = useState("");
   const [isChatLoading, setIsChatLoading] = useState(false);
-
-  const techniquePattern = useTechniquePattern();
 
   const isLastStep = stepIndex >= totalSteps - 1;
   const isFinished = totalSteps > 0 && stepIndex === totalSteps;
@@ -140,49 +108,13 @@ export function CookModeClient({ recipe }: Props) {
         event.preventDefault();
         setStepIndex((index) => Math.max(index - 1, 0));
       } else if (event.key === "Escape") {
-        setTechnique(null);
+        closeTechnique();
       }
     }
 
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [totalSteps]);
-
-  async function explainTechnique(term: string, context: string) {
-    setIsTechniqueLoading(true);
-    setTechnique({
-      term,
-      explanation: "Checking this technique in context...",
-      cue: "",
-      source: "assistant",
-    });
-
-    try {
-      const response = await fetch("/api/technique", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ term, context }),
-      });
-      const data = (await response.json()) as TechniqueState;
-
-      setTechnique({
-        term,
-        explanation: data.explanation,
-        cue: data.cue,
-        source: data.source,
-      });
-    } catch {
-      setTechnique({
-        term,
-        explanation:
-          "I could not fetch an explanation. Use color, smell, texture, and heat level as your cues.",
-        cue: "Try again in a moment.",
-        source: "local",
-      });
-    } finally {
-      setIsTechniqueLoading(false);
-    }
-  }
+  }, [totalSteps, closeTechnique]);
 
   async function sendQuestion(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -234,33 +166,6 @@ export function CookModeClient({ recipe }: Props) {
     } finally {
       setIsChatLoading(false);
     }
-  }
-
-  function renderStepText(step: string): ReactNode {
-    const segments = step.split(techniquePattern);
-
-    return segments.map((segment, index) => {
-      const isTechnique = techniquePattern.test(segment);
-      techniquePattern.lastIndex = 0;
-
-      if (!isTechnique) {
-        return <span key={`${segment}-${index}`}>{segment}</span>;
-      }
-
-      const normalizedTerm = normalizeTechniqueTerm(segment);
-
-      return (
-        <button
-          key={`${segment}-${index}`}
-          type="button"
-          onClick={() => explainTechnique(normalizedTerm, step)}
-          className="mx-0.5 rounded-md bg-mise-technique px-1.5 py-0.5 font-semibold text-mise-technique-text underline-offset-2 hover:bg-mise-technique-hover hover:underline"
-          title={`Explain ${normalizedTerm}`}
-        >
-          {segment}
-        </button>
-      );
-    });
   }
 
   if (totalSteps === 0) {
@@ -353,51 +258,16 @@ export function CookModeClient({ recipe }: Props) {
                 {renderStepText(currentStep ?? "")}
               </p>
             </div>
-
-            {technique ? (
-              <section className="mise-card mt-8 rounded-2xl p-5">
-                <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2">
-                    <Sparkles
-                      size={16}
-                      className="text-mise-accent"
-                      aria-hidden="true"
-                    />
-                    <h3 className="font-semibold capitalize text-mise-ink">
-                      {technique.term}
-                    </h3>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setTechnique(null)}
-                    className="mise-btn-ghost text-xs"
-                  >
-                    Close
-                  </button>
-                </div>
-                <p className="mt-3 text-sm leading-relaxed text-mise-muted">
-                  {technique.explanation}
-                </p>
-                {technique.cue ? (
-                  <p className="mt-3 rounded-xl border border-mise-accent/20 bg-mise-surface-soft px-3 py-2 text-sm text-mise-accent">
-                    {technique.cue}
-                  </p>
-                ) : null}
-                {isTechniqueLoading ? (
-                  <p className="mt-3 inline-flex items-center gap-2 text-xs font-semibold text-mise-muted">
-                    <Loader2
-                      className="animate-spin"
-                      size={14}
-                      aria-hidden="true"
-                    />
-                    Asking assistant
-                  </p>
-                ) : null}
-              </section>
-            ) : null}
           </div>
         )}
       </section>
+
+      <TechniquePopover
+        technique={technique}
+        isLoading={isTechniqueLoading}
+        anchor={techniqueAnchor}
+        onClose={closeTechnique}
+      />
 
       <footer className="sticky bottom-0 z-10 border-t border-mise-border bg-mise-surface/95 backdrop-blur-md">
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-4 py-4 sm:px-6">
