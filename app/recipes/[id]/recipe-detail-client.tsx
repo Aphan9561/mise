@@ -145,38 +145,36 @@ export function RecipeDetailClient({ recipe }: RecipeDetailClientProps) {
             <p className="text-[10px] font-semibold uppercase tracking-wider text-mise-accent">
               {recipe.cuisine ?? recipe.source}
             </p>
-            <div className="mt-2 flex items-start justify-between gap-3">
-              <h1 className="font-serif text-3xl leading-tight text-mise-ink sm:text-4xl">
-                {recipe.title}
-              </h1>
-              <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
-                <Link
-                  href={`/recipes/${recipe.id}/cook`}
-                  className="mise-btn-primary rounded-xl py-2 pl-3 pr-3 text-xs sm:text-sm"
-                >
-                  <ChefHat size={16} aria-hidden="true" />
-                  Cook
-                </Link>
-                <AddToGrocery recipeId={recipe.id} />
-                <button
-                  type="button"
-                  onClick={() => setIsEditing((current) => !current)}
-                  className="mise-btn-secondary rounded-xl py-2 pl-3 pr-3 text-xs sm:text-sm"
-                >
-                  {isEditing ? (
-                    <X size={16} aria-hidden="true" />
-                  ) : (
-                    <Pencil size={16} aria-hidden="true" />
-                  )}
-                  {isEditing ? "Close" : "Edit"}
-                </button>
-              </div>
-            </div>
+            <h1 className="mt-2 font-serif text-3xl leading-tight text-mise-ink sm:text-4xl">
+              {recipe.title}
+            </h1>
             {recipe.description ? (
               <p className="mt-4 text-sm leading-relaxed text-mise-muted">
                 {recipe.description}
               </p>
             ) : null}
+            <div className="mt-5 flex flex-wrap items-center gap-2">
+              <Link
+                href={`/recipes/${recipe.id}/cook`}
+                className="mise-btn-primary rounded-xl py-2 pl-3 pr-3 text-xs sm:text-sm"
+              >
+                <ChefHat size={16} aria-hidden="true" />
+                Cook
+              </Link>
+              <AddToGrocery recipeId={recipe.id} />
+              <button
+                type="button"
+                onClick={() => setIsEditing((current) => !current)}
+                className="mise-btn-secondary rounded-xl py-2 pl-3 pr-3 text-xs sm:text-sm"
+              >
+                {isEditing ? (
+                  <X size={16} aria-hidden="true" />
+                ) : (
+                  <Pencil size={16} aria-hidden="true" />
+                )}
+                {isEditing ? "Close" : "Edit"}
+              </button>
+            </div>
             <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
               <span className="inline-flex items-center gap-1.5 rounded-full bg-mise-chip px-3 py-1.5 text-xs font-semibold text-mise-chip-text">
                 <Clock3 size={14} aria-hidden="true" />
