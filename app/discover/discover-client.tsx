@@ -52,7 +52,7 @@ export function DiscoverClient({
   const [category, setCategory] = useState("");
   const [area, setArea] = useState("");
   const [ingredient, setIngredient] = useState("");
-  const [query, setQuery] = useState("weeknight dinner");
+  const [query, setQuery] = useState("");
 
   const [recipes, setRecipes] =
     useState<DiscoveryRecipe[]>(initialRecipes);
@@ -86,7 +86,7 @@ export function DiscoverClient({
     setCategory("");
     setArea("");
     setIngredient("");
-    setQuery("weeknight dinner");
+    setQuery("");
     setIsSearching(true);
     try {
       const response = await fetch(
@@ -94,7 +94,7 @@ export function DiscoverClient({
           category: "",
           area: "",
           ingredient: "",
-          query: "weeknight dinner",
+          query: "",
         }),
       );
       const data = (await response.json()) as {
@@ -124,7 +124,7 @@ export function DiscoverClient({
       ? area
       : ingredient.trim()
         ? ingredient
-        : query;
+        : query.trim() || "All recipes";
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
