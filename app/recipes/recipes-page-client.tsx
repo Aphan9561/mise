@@ -6,12 +6,14 @@ import { useRouter } from "next/navigation";
 import { UserButton } from "@clerk/nextjs";
 import {
   BookOpen,
+  Boxes,
   Clock3,
   Compass,
   Import,
   Loader2,
   Plus,
   Search,
+  ShoppingBasket,
   Utensils,
 } from "lucide-react";
 import {
@@ -137,6 +139,20 @@ export function RecipesPageClient({
             </div>
           </Link>
           <div className="flex items-center gap-2">
+            <Link
+              href="/pantry"
+              className="mise-btn-secondary rounded-full py-2 pl-3 pr-4 text-sm"
+            >
+              <Boxes size={16} aria-hidden="true" />
+              Pantry
+            </Link>
+            <Link
+              href="/grocery"
+              className="mise-btn-secondary rounded-full py-2 pl-3 pr-4 text-sm"
+            >
+              <ShoppingBasket size={16} aria-hidden="true" />
+              Grocery
+            </Link>
             <Link
               href="/discover"
               className="mise-btn-secondary rounded-full py-2 pl-3 pr-4 text-sm"

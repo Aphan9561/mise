@@ -62,3 +62,55 @@ create trigger set_recipes_updated_at
 before update on public.recipes
 for each row
 execute function public.set_updated_at();
+
+create table if not exists public.pantry_items (
+  id uuid primary key default gen_random_uuid(),
+  clerk_user_id text not null,
+  name text not null,
+  quantity text,
+  unit text,
+  notes text,
+  expires_on date,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists pantry_items_clerk_user_id_idx
+on public.pantry_items (clerk_user_id);
+
+create index if not exists pantry_items_name_lower_idx
+on public.pantry_items (clerk_user_id, lower(name));
+
+drop trigger if exists set_pantry_items_updated_at on public.pantry_items;
+
+create trigger set_pantry_items_updated_at
+before update on public.pantry_items
+for each row
+execute function public.set_updated_at();
+
+create table if not exists public.grocery_items (
+  id uuid primary key default gen_random_uuid(),
+  clerk_user_id text not null,
+  name text not null,
+  quantity text,
+  unit text,
+  notes text,
+  is_checked boolean not null default false,
+  recipe_id uuid references public.recipes(id) on delete set null,
+  recipe_title text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create index if not exists grocery_items_clerk_user_id_idx
+on public.grocery_items (clerk_user_id);
+
+create index if not exists grocery_items_clerk_user_id_checked_idx
+on public.grocery_items (clerk_user_id, is_checked);
+
+drop trigger if exists set_grocery_items_updated_at on public.grocery_items;
+
+create trigger set_grocery_items_updated_at
+before update on public.grocery_items
+for each row
+execute function public.set_updated_at();

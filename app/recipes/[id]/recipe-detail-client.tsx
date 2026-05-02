@@ -8,8 +8,10 @@ import {
   type FormEvent,
 } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   Bot,
+  ChefHat,
   Clock3,
   ExternalLink,
   Loader2,
@@ -24,6 +26,7 @@ import {
   updateRecipeAction,
   type RecipeActionState,
 } from "@/app/recipes/actions";
+import { AddToGrocery } from "@/app/recipes/[id]/add-to-grocery";
 import { techniqueTerms } from "@/lib/cooking/techniques";
 import type { UserRecipe } from "@/lib/supabase/recipes";
 
@@ -237,7 +240,15 @@ export function RecipeDetailClient({ recipe }: RecipeDetailClientProps) {
               <h1 className="font-serif text-3xl leading-tight text-mise-ink sm:text-4xl">
                 {recipe.title}
               </h1>
-              <div className="flex shrink-0 items-center gap-2">
+              <div className="flex shrink-0 flex-wrap items-center justify-end gap-2">
+                <Link
+                  href={`/recipes/${recipe.id}/cook`}
+                  className="mise-btn-primary rounded-xl py-2 pl-3 pr-3 text-xs sm:text-sm"
+                >
+                  <ChefHat size={16} aria-hidden="true" />
+                  Cook
+                </Link>
+                <AddToGrocery recipeId={recipe.id} />
                 <button
                   type="button"
                   onClick={() => setIsEditing((current) => !current)}
