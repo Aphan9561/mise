@@ -77,18 +77,24 @@ export async function lookupMeal(id: string): Promise<TheMealDbMeal | null> {
   return data?.meals?.[0] ?? null;
 }
 
+function uniqueSorted(values: string[]): string[] {
+  return Array.from(
+    new Set(values.map((value) => value.trim()).filter(Boolean)),
+  ).sort((a, b) => a.localeCompare(b));
+}
+
 export async function listTheMealDbCategories(): Promise<string[]> {
   const data = await fetchThemealdbJson<{
     meals: { strCategory: string }[] | null;
   }>(`${THEMEALDB_BASE}/list.php?c=list`);
-  return data?.meals?.map((m) => m.strCategory) ?? [];
+  return uniqueSorted(data?.meals?.map((m) => m.strCategory) ?? []);
 }
 
 export async function listTheMealDbAreas(): Promise<string[]> {
   const data = await fetchThemealdbJson<{
     meals: { strArea: string }[] | null;
   }>(`${THEMEALDB_BASE}/list.php?a=list`);
-  return data?.meals?.map((m) => m.strArea) ?? [];
+  return uniqueSorted(data?.meals?.map((m) => m.strArea) ?? []);
 }
 
 export async function hydrateMeals(
