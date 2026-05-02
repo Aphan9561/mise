@@ -26,19 +26,30 @@ export default async function DiscoverRecipePage({ params }: Props) {
   return (
     <main className="min-h-screen bg-mise-page text-mise-ink">
       <header className="mise-header">
-        <div className="mx-auto flex max-w-3xl items-center justify-between gap-4 px-4 py-5 sm:px-6">
-          <Link
-            href="/discover"
-            className="mise-btn-ghost rounded-full text-sm"
-          >
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-5 sm:px-6 lg:px-8">
+          <Link href="/discover" className="mise-btn-ghost rounded-full text-sm">
             ← Discover
           </Link>
-          <Link
-            href="/recipes"
-            className="inline-flex items-center gap-2 rounded-full bg-mise-chip px-4 py-2 text-sm font-semibold text-mise-chip-text"
-          >
-            My recipes
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/pantry"
+              className="mise-btn-secondary rounded-full py-2 pl-3 pr-4 text-sm"
+            >
+              Pantry
+            </Link>
+            <Link
+              href="/grocery"
+              className="mise-btn-secondary rounded-full py-2 pl-3 pr-4 text-sm"
+            >
+              Grocery
+            </Link>
+            <Link
+              href="/recipes"
+              className="inline-flex items-center gap-2 rounded-full bg-mise-chip px-4 py-2 text-sm font-semibold text-mise-chip-text"
+            >
+              My recipes
+            </Link>
+          </div>
         </div>
       </header>
       <DiscoverRecipeDetail recipe={recipe} />
