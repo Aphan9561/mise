@@ -129,34 +129,64 @@ export function RecipeDetailClient({ recipe }: RecipeDetailClientProps) {
 
   return (
     <>
-      <div className="mx-auto grid max-w-6xl gap-6 px-4 py-8 sm:px-6 lg:grid-cols-[0.82fr_1.18fr] lg:px-8">
-        <section className="mise-card overflow-hidden rounded-2xl">
-          <div
-            className="aspect-[16/10] bg-[linear-gradient(145deg,#eef4ee_0%,#f4efe8_100%)] bg-cover bg-center"
-            style={
-              recipe.image_url
-                ? { backgroundImage: `url(${recipe.image_url})` }
-                : undefined
-            }
-            role={recipe.image_url ? "img" : undefined}
-            aria-label={recipe.image_url ? recipe.title : undefined}
-          />
-          <div className="border-b border-mise-border px-6 py-6">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-mise-accent">
+      <div className="mx-auto max-w-5xl px-4 pb-16 pt-6 sm:px-6 lg:px-8">
+        <article className="mise-card overflow-hidden rounded-3xl">
+          {recipe.image_url ? (
+            <div
+              className="aspect-[21/9] bg-cover bg-center"
+              style={{ backgroundImage: `url(${recipe.image_url})` }}
+              role="img"
+              aria-label={recipe.title}
+            />
+          ) : null}
+          <div className="px-6 py-8 sm:px-10 sm:py-12">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-mise-accent">
               {recipe.cuisine ?? recipe.source}
             </p>
-            <h1 className="mt-2 font-serif text-3xl leading-tight text-mise-ink sm:text-4xl">
+            <h1 className="mt-3 font-serif text-4xl leading-[1.05] tracking-tight text-mise-ink sm:text-5xl lg:text-6xl">
               {recipe.title}
             </h1>
             {recipe.description ? (
-              <p className="mt-4 text-sm leading-relaxed text-mise-muted">
+              <p className="mt-5 max-w-2xl text-base leading-relaxed text-mise-muted sm:text-lg">
                 {recipe.description}
               </p>
             ) : null}
-            <div className="mt-5 flex flex-wrap items-center gap-2">
+
+            <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-mise-muted">
+              <span className="inline-flex items-center gap-1.5">
+                <Clock3 size={15} aria-hidden="true" />
+                {recipe.prep_minutes ?? 30} min
+              </span>
+              <span aria-hidden="true">·</span>
+              <span>
+                {recipe.ingredients.length}{" "}
+                {recipe.ingredients.length === 1 ? "ingredient" : "ingredients"}
+              </span>
+              <span aria-hidden="true">·</span>
+              <span>
+                {recipe.instructions.length}{" "}
+                {recipe.instructions.length === 1 ? "step" : "steps"}
+              </span>
+              {recipe.source_url ? (
+                <>
+                  <span aria-hidden="true">·</span>
+                  <a
+                    href={recipe.source_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 underline-offset-2 hover:text-mise-ink hover:underline"
+                  >
+                    <ExternalLink size={14} aria-hidden="true" />
+                    Source
+                  </a>
+                </>
+              ) : null}
+            </div>
+
+            <div className="mt-7 flex flex-wrap items-center gap-2">
               <Link
                 href={`/recipes/${recipe.id}/cook`}
-                className="mise-btn-primary rounded-xl py-2 pl-3 pr-3 text-xs sm:text-sm"
+                className="mise-btn-primary rounded-xl px-4 py-2.5 text-sm"
               >
                 <ChefHat size={16} aria-hidden="true" />
                 Cook
@@ -165,7 +195,7 @@ export function RecipeDetailClient({ recipe }: RecipeDetailClientProps) {
               <button
                 type="button"
                 onClick={() => setIsEditing((current) => !current)}
-                className="mise-btn-secondary rounded-xl py-2 pl-3 pr-3 text-xs sm:text-sm"
+                className="mise-btn-secondary rounded-xl px-4 py-2.5 text-sm"
               >
                 {isEditing ? (
                   <X size={16} aria-hidden="true" />
@@ -175,30 +205,15 @@ export function RecipeDetailClient({ recipe }: RecipeDetailClientProps) {
                 {isEditing ? "Close" : "Edit"}
               </button>
             </div>
-            <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-mise-chip px-3 py-1.5 text-xs font-semibold text-mise-chip-text">
-                <Clock3 size={14} aria-hidden="true" />
-                {recipe.prep_minutes ?? 30} min
-              </span>
-              {recipe.source_url ? (
-                <a
-                  href={recipe.source_url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="mise-btn-secondary rounded-full py-1.5 pl-3 pr-3 text-xs"
-                >
-                  <ExternalLink size={14} aria-hidden="true" />
-                  Source
-                </a>
-              ) : null}
-            </div>
           </div>
+        </article>
 
-          {isEditing ? (
-            <form
-              action={editAction}
-              className="space-y-4 border-b border-mise-border p-6"
-            >
+        {isEditing ? (
+          <section className="mise-card mt-6 overflow-hidden rounded-2xl">
+            <div className="border-b border-mise-border px-6 py-5">
+              <h2 className="font-serif text-lg text-mise-ink">Edit recipe</h2>
+            </div>
+            <form action={editAction} className="space-y-4 p-6">
               <input name="recipeId" type="hidden" value={recipe.id} />
               <label className="mise-label">
                 Title
@@ -247,30 +262,32 @@ export function RecipeDetailClient({ recipe }: RecipeDetailClientProps) {
                   placeholder="https://…"
                 />
               </label>
-              <label className="mise-label">
-                Ingredients
-                <textarea
-                  name="ingredients"
-                  required
-                  defaultValue={recipe.ingredients.join("\n")}
-                  className="mise-textarea h-36"
-                />
-              </label>
-              <label className="mise-label">
-                Instructions
-                <textarea
-                  name="instructions"
-                  required
-                  defaultValue={recipe.instructions.join("\n")}
-                  className="mise-textarea h-44"
-                />
-              </label>
+              <div className="grid gap-3 lg:grid-cols-2">
+                <label className="mise-label">
+                  Ingredients
+                  <textarea
+                    name="ingredients"
+                    required
+                    defaultValue={recipe.ingredients.join("\n")}
+                    className="mise-textarea h-44"
+                  />
+                </label>
+                <label className="mise-label">
+                  Instructions
+                  <textarea
+                    name="instructions"
+                    required
+                    defaultValue={recipe.instructions.join("\n")}
+                    className="mise-textarea h-44"
+                  />
+                </label>
+              </div>
               <label className="mise-label">
                 Notes
                 <textarea
                   name="notes"
                   defaultValue={recipe.notes ?? ""}
-                  className="mise-textarea h-28"
+                  className="mise-textarea h-24"
                   placeholder="Adjustments for next time"
                 />
               </label>
@@ -298,36 +315,84 @@ export function RecipeDetailClient({ recipe }: RecipeDetailClientProps) {
                 </p>
               ) : null}
             </form>
-          ) : null}
+          </section>
+        ) : null}
 
-          <div className="p-6">
-            <h2 className="text-sm font-semibold text-mise-ink">Ingredients</h2>
-            <ul className="mt-4 space-y-2">
-              {recipe.ingredients.map((ingredient) => (
+        <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.4fr)]">
+          <section className="mise-card overflow-hidden rounded-2xl lg:sticky lg:top-24 lg:self-start">
+            <div className="border-b border-mise-border px-6 py-5">
+              <h2 className="font-serif text-xl text-mise-ink">Ingredients</h2>
+              <p className="mt-1 text-xs text-mise-muted">
+                {recipe.ingredients.length}{" "}
+                {recipe.ingredients.length === 1 ? "item" : "items"}
+              </p>
+            </div>
+            <ul className="divide-y divide-mise-border/60">
+              {recipe.ingredients.map((ingredient, index) => (
                 <li
-                  key={ingredient}
-                  className="rounded-xl border border-mise-border/70 bg-mise-surface-soft px-4 py-2.5 text-sm text-mise-ink"
+                  key={`${ingredient}-${index}`}
+                  className="px-6 py-3 text-sm leading-relaxed text-mise-ink"
                 >
                   {ingredient}
                 </li>
               ))}
             </ul>
-          </div>
-          {recipe.notes ? (
-            <div className="border-t border-mise-border p-6">
-              <h2 className="text-sm font-semibold text-mise-ink">Notes</h2>
-              <p className="mt-3 whitespace-pre-line rounded-xl border border-mise-warm/20 bg-mise-warn-bg px-4 py-3 text-sm leading-relaxed text-mise-warn-text">
+          </section>
+
+          <section className="mise-card overflow-hidden rounded-2xl">
+            <div className="border-b border-mise-border px-6 py-5">
+              <h2 className="font-serif text-xl text-mise-ink">Steps</h2>
+              <p className="mt-1 text-xs text-mise-muted">
+                Tap a highlighted term for a quick technique note.
+              </p>
+            </div>
+            <ol className="space-y-6 p-6 sm:p-8">
+              {recipe.instructions.map((step, index) => (
+                <li key={`${step}-${index}`} className="flex gap-4">
+                  <span className="mt-0.5 grid size-9 shrink-0 place-items-center rounded-xl bg-mise-forest text-sm font-semibold text-white">
+                    {index + 1}
+                  </span>
+                  <p className="min-w-0 text-base leading-7 text-mise-ink">
+                    {renderStepText(step)}
+                  </p>
+                </li>
+              ))}
+            </ol>
+          </section>
+        </div>
+
+        {recipe.notes ? (
+          <section className="mise-card mt-8 overflow-hidden rounded-2xl border-mise-warm/25 bg-mise-warn-bg">
+            <div className="px-6 py-5">
+              <h2 className="text-xs font-semibold uppercase tracking-wider text-mise-warm">
+                Your notes
+              </h2>
+              <p className="mt-3 whitespace-pre-line text-sm leading-relaxed text-mise-warn-text">
                 {recipe.notes}
               </p>
             </div>
-          ) : null}
-          <div className="border-t border-mise-border p-6">
-            <form action={deleteRecipeAction} className="space-y-3">
+          </section>
+        ) : null}
+
+        <section className="mt-10 rounded-2xl border border-mise-border bg-mise-surface/60 p-5">
+          <details className="group">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-medium text-mise-muted hover:text-mise-danger">
+              <span>Delete this recipe</span>
+              <span
+                aria-hidden="true"
+                className="text-xs transition-transform group-open:rotate-90"
+              >
+                ›
+              </span>
+            </summary>
+            <form action={deleteRecipeAction} className="mt-4 space-y-3">
               <input name="recipeId" type="hidden" value={recipe.id} />
               <label className="flex items-start gap-2 text-sm text-mise-muted">
                 <input
                   checked={deleteConfirmed}
-                  onChange={(event) => setDeleteConfirmed(event.target.checked)}
+                  onChange={(event) =>
+                    setDeleteConfirmed(event.target.checked)
+                  }
                   className="mt-1 rounded border-mise-border"
                   type="checkbox"
                 />
@@ -341,30 +406,8 @@ export function RecipeDetailClient({ recipe }: RecipeDetailClientProps) {
                 Delete recipe
               </button>
             </form>
-          </div>
+          </details>
         </section>
-
-        <section className="mise-card overflow-hidden rounded-2xl">
-          <div className="border-b border-mise-border px-6 py-4">
-            <h2 className="font-serif text-lg text-mise-ink">Cook mode</h2>
-            <p className="mt-1 text-xs text-mise-muted">
-              Tap highlighted terms for a quick technique note.
-            </p>
-          </div>
-          <ol className="space-y-6 p-6">
-            {recipe.instructions.map((step, index) => (
-              <li key={`${step}-${index}`} className="flex gap-4">
-                <span className="mt-0.5 grid size-9 shrink-0 place-items-center rounded-xl bg-mise-forest text-sm font-semibold text-white">
-                  {index + 1}
-                </span>
-                <p className="min-w-0 text-base leading-7 text-mise-ink">
-                  {renderStepText(step)}
-                </p>
-              </li>
-            ))}
-          </ol>
-        </section>
-
       </div>
 
       <TechniquePopover
