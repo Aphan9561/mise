@@ -18,6 +18,7 @@ import {
   deleteGroceryItemAction,
   type GroceryActionState,
 } from "@/app/grocery/actions";
+import { groceryItemDisplayName } from "@/lib/cooking/pantry-match";
 import type { GroceryItem } from "@/lib/supabase/grocery";
 
 type Props = {
@@ -210,6 +211,8 @@ export function GroceryPageClient({
 }
 
 function GroceryRow({ item }: { item: GroceryItem }) {
+  const label = groceryItemDisplayName(item.name);
+
   return (
     <li className="flex items-start justify-between gap-4 px-6 py-3">
       <form action={checkOffGroceryItemAction} className="flex flex-1 items-start gap-3">
@@ -217,12 +220,12 @@ function GroceryRow({ item }: { item: GroceryItem }) {
         <button
           type="submit"
           className="mt-0.5 grid size-11 min-h-11 min-w-11 shrink-0 place-items-center rounded-md border border-mise-border bg-mise-surface transition hover:border-mise-accent hover:bg-mise-chip"
-          aria-label={`Got ${item.name} — move to pantry`}
+          aria-label={`Got ${label} — move to pantry`}
           title="Got it — move to pantry"
         />
         <div className="min-w-0 flex-1">
           <p className="text-sm font-medium text-mise-ink">
-            {item.name}
+            {label}
           </p>
           {item.recipe_title ? (
             <p className="mt-0.5 text-xs text-mise-muted">

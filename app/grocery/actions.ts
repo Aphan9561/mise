@@ -16,9 +16,9 @@ import {
 } from "@/lib/supabase/pantry";
 import {
   groceryCompareKey,
+  groceryItemDisplayName,
   ingredientMatchesPantry,
   matchIngredientsAgainstPantry,
-  parseIngredientLine,
 } from "@/lib/cooking/pantry-match";
 
 export type GroceryActionState = {
@@ -60,7 +60,7 @@ export async function createGroceryItemAction(
     };
   }
 
-  const cleanedName = parseIngredientLine(rawName).name;
+  const cleanedName = groceryItemDisplayName(rawName);
 
   try {
     const existing = await listGroceryItems(userId);
@@ -114,13 +114,17 @@ export async function checkOffGroceryItemAction(formData: FormData) {
     return;
   }
 
+  const displayName = groceryItemDisplayName(item.name);
   const pantryResult = await listPantryItems(userId);
-  const alreadyInPantry = ingredientMatchesPantry(item.name, pantryResult.items);
+  const alreadyInPantry = ingredientMatchesPantry(
+    displayName,
+    pantryResult.items,
+  );
 
   if (!alreadyInPantry) {
     await createPantryItem({
       clerkUserId: userId,
-      name: item.name,
+      name: displayName,
     });
   }
 
@@ -225,8 +229,8 @@ export async function addRecipeToGroceryAction(
     let duplicateSkipped = 0;
 
     for (const match of toConsider) {
-      const displayName = match.parsed.name || match.parsed.raw;
-      const key = groceryCompareKey(displayName);
+      const canonicalName = groceryItemDisplayName(match.parsed.raw);
+      const key = groceryCompareKey(canonicalName);
       if (keysOnList.has(key) || seenInBatch.has(key)) {
         duplicateSkipped += 1;
         continue;
@@ -234,7 +238,7 @@ export async function addRecipeToGroceryAction(
       seenInBatch.add(key);
       bulkRows.push({
         clerkUserId: userId,
-        name: displayName,
+        name: canonicalName,
         notes: match.parsed.raw,
         recipeId: recipe.id,
         recipeTitle: recipe.title,
@@ -334,7 +338,7 @@ export async function previewRecipeForGroceryAction(
         recipeTitle: recipe.title,
         matches: matches.map((match) => ({
           raw: match.parsed.raw,
-          name: match.parsed.name,
+          name: groceryItemDisplayName(match.parsed.raw),
           pantryMatch: match.matchedPantryItem?.name ?? null,
         })),
       },

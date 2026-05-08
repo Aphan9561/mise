@@ -10,10 +10,14 @@ export type ParsedIngredient = {
 const COMMON_UNITS = new Set([
   "tsp",
   "tsps",
+  "ts",
   "teaspoon",
   "teaspoons",
   "tbsp",
   "tbsps",
+  "tbs",
+  "tbls",
+  "dsp",
   "tablespoon",
   "tablespoons",
   "cup",
@@ -34,9 +38,18 @@ const COMMON_UNITS = new Set([
   "ml",
   "milliliter",
   "milliliters",
+  "millilitre",
+  "millilitres",
+  "cl",
+  "dl",
   "l",
   "liter",
   "liters",
+  "litre",
+  "litres",
+  "pint",
+  "pints",
+  "floz",
   "pinch",
   "pinches",
   "dash",
@@ -162,6 +175,124 @@ function normalizeWhitespace(value: string): string {
   return value.replace(/\s+/g, " ").trim();
 }
 
+/** Unicode + ASCII fractions and plain numeric quantities used in ingredient lines. */
+const QTY_RE = String.raw`\d+(?:\.\d+)?|\d+\/\d+|[¼½¾⅓⅔⅛⅜⅝⅞]`;
+
+const GLUED_SUFFIXES = new Set([
+  "g",
+  "kg",
+  "mg",
+  "lb",
+  "lbs",
+  "oz",
+  "floz",
+  "ml",
+  "cl",
+  "dl",
+  "l",
+  "gram",
+  "grams",
+  "ounce",
+  "ounces",
+  "tsp",
+  "tsps",
+  "ts",
+  "tbsp",
+  "tbsps",
+  "tbls",
+  "tbs",
+  "dsp",
+  "cup",
+  "cups",
+  "can",
+  "cans",
+  "stalk",
+  "stalks",
+  "sprig",
+  "sprigs",
+]);
+
+function classifyToken(raw: string): string {
+  return raw.toLowerCase().replace(/\.$/, "");
+}
+
+function looksLikeGluedMeasureToken(raw: string): boolean {
+  const t = classifyToken(raw);
+  const glued = new RegExp(
+    `^(${QTY_RE})(?:\\s*[x×]\\s*)?([a-z]{1,7})$`,
+    "i",
+  ).exec(t);
+  if (!glued) {
+    return false;
+  }
+  return GLUED_SUFFIXES.has(glued[2].toLowerCase());
+}
+
+function stripRepeatedLeadingMeasures(value: string): string {
+  let s = normalizeWhitespace(value);
+  const gluedStart = new RegExp(
+    `^(${QTY_RE})(?:\\s*[x×]\\s*)?([a-z]{1,7})(?=\\s|$)`,
+    "i",
+  );
+
+  const spacedMeasures = new RegExp(
+    `^(${QTY_RE})(?:\\s*-\\s*(${QTY_RE}))?\\s+(?:cups?|tablespoons?|teaspoons?|tsps|tbsps?|tbls|tbs|ts|grams?|ounces?|pounds?|kilograms?|millilitres?|milliliters?|litres?|liters?|stalks?)\\b\\.?`,
+    "i",
+  );
+
+  const spacedShortUnits = new RegExp(
+    `^(${QTY_RE})\\s+(g|kg|lbs?|oz|ml|cl)\\b\\.?`,
+    "i",
+  );
+
+  for (let guard = 0; guard < 14; guard++) {
+    const before = s;
+    s = s
+      .replace(/^(approximately|approx\.|approx|about|roughly)\s+/i, "")
+      .trimStart();
+    s = s.replace(/^~\s+/i, "").trimStart();
+
+    const gluedMatch = gluedStart.exec(s);
+    if (gluedMatch && GLUED_SUFFIXES.has(gluedMatch[2].toLowerCase())) {
+      s = s.slice(gluedMatch[0].length).trimStart();
+      continue;
+    }
+
+    if (spacedMeasures.test(s)) {
+      s = s.replace(spacedMeasures, "").trimStart();
+      continue;
+    }
+
+    if (spacedShortUnits.test(s)) {
+      s = s.replace(spacedShortUnits, "").trimStart();
+      continue;
+    }
+
+    if (s === before) {
+      break;
+    }
+  }
+
+  return s;
+}
+
+function tokenIsMeasure(token: string): boolean {
+  const t = classifyToken(token);
+  if (t.length === 0) {
+    return false;
+  }
+  if (/^[¼½¾⅓⅔⅛⅜⅝⅞]$/.test(t)) {
+    return true;
+  }
+  if (/^[\d¼½¾⅓⅔⅛⅜⅝⅞./+-]+$/.test(t)) {
+    return true;
+  }
+  if (COMMON_UNITS.has(t)) {
+    return true;
+  }
+  return looksLikeGluedMeasureToken(t);
+}
+
 function isQuantityToken(token: string): boolean {
   return /^[\d¼½¾⅓⅔⅛⅜⅝⅞./-]+$/.test(token);
 }
@@ -183,32 +314,50 @@ function cleanForName(value: string): string {
     ),
   );
 
-  const tokens = normalizeWhitespace(stripped)
+  const peeledLine = stripRepeatedLeadingMeasures(stripped);
+
+  const tokens = normalizeWhitespace(peeledLine)
     .split(" ")
     .filter((token) => token.length > 0);
 
   const meaningful: string[] = [];
-  let leadingStripped = false;
+  let leadingPassed = false;
 
   for (const token of tokens) {
-    if (!leadingStripped && (isQuantityToken(token) || isUnitToken(token))) {
+    const measure = tokenIsMeasure(token);
+    const lc = classifyToken(token);
+
+    if (!leadingPassed && measure) {
       continue;
     }
 
-    leadingStripped = true;
+    leadingPassed = true;
 
-    if (STOP_WORDS.has(token)) {
+    if (STOP_WORDS.has(lc)) {
       continue;
     }
 
-    if (isQuantityToken(token) || isUnitToken(token)) {
+    if (measure) {
       continue;
     }
 
     meaningful.push(token);
   }
 
-  return meaningful.join(" ");
+  let core = normalizeWhitespace(meaningful.join(" "));
+
+  if (core.length === 0) {
+    core = normalizeWhitespace(
+      peeledLine
+        .split(" ")
+        .filter(Boolean)
+        .filter((tok) => !tokenIsMeasure(tok))
+        .filter((tok) => !STOP_WORDS.has(classifyToken(tok)))
+        .join(" "),
+    );
+  }
+
+  return core;
 }
 
 export function normalizeIngredientName(value: string): string {
@@ -232,8 +381,23 @@ export function parseIngredientLine(raw: string): ParsedIngredient {
   }
 
   const cleanedName = cleanForName(trimmed);
-  const fallback = normalizeWhitespace(stripParentheticals(beforeNote));
-  const displayName = titleCase(cleanedName || fallback || trimmed);
+  let nameBody = normalizeWhitespace(cleanedName);
+
+  if (!nameBody) {
+    const shell = stripRepeatedLeadingMeasures(
+      normalizeWhitespace(
+        stripTrailingNote(stripParentheticals(trimmed)).toLowerCase(),
+      ).replace(/[.;:!?,]+/g, " "),
+    );
+    nameBody = normalizeWhitespace(
+      normalizeWhitespace(shell)
+        .split(" ")
+        .filter((t) => t.length > 0 && !tokenIsMeasure(t))
+        .join(" "),
+    );
+  }
+
+  const displayName = titleCase(nameBody.trim() ? nameBody : "Item");
 
   return {
     raw: trimmed,
@@ -294,18 +458,39 @@ export function matchIngredientsAgainstPantry(
 ): IngredientPantryMatch[] {
   return ingredients.map((line) => {
     const parsed = parseIngredientLine(line);
+    const label = groceryItemDisplayName(line);
+
     return {
       parsed,
-      matchedPantryItem: ingredientMatchesPantry(parsed.name, pantry),
+      matchedPantryItem: ingredientMatchesPantry(label, pantry),
     };
   });
 }
 
+/**
+ * Canonical label shown in grocery UI (fixes legacy rows saved with qty/units).
+ */
+export function groceryItemDisplayName(raw: string): string {
+  const t = raw.trim();
+  if (!t.length) {
+    return "";
+  }
+
+  const primary = normalizeWhitespace(parseIngredientLine(t).name);
+  if (!/^item$/i.test(primary)) {
+    return primary;
+  }
+
+  const secondary = normalizeWhitespace(cleanForName(t));
+  return secondary.length ? titleCase(secondary) : t;
+}
+
 /** Stable key for matching grocery rows and deduping additions. */
 export function groceryCompareKey(displayName: string): string {
-  const parsedName = parseIngredientLine(displayName).name.trim().toLowerCase();
-  const fallback = displayName.trim().toLowerCase();
-  return parsedName || fallback;
+  const key =
+    normalizeWhitespace(groceryItemDisplayName(displayName)).toLowerCase() ||
+    displayName.trim().toLowerCase();
+  return key;
 }
 
 export type PantryCoverageSummary = {
