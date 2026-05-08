@@ -15,6 +15,7 @@ import {
   ExternalLink,
   Loader2,
   Pencil,
+  Printer,
   Save,
   Send,
   X,
@@ -27,6 +28,7 @@ import {
 import { AddToGrocery } from "@/app/recipes/[id]/add-to-grocery";
 import { PantryCoverageBanner } from "@/app/recipes/pantry-coverage-banner";
 import { RecipeStarButton } from "@/app/recipes/recipe-star-button";
+import { RecipeTriedButton } from "@/app/recipes/recipe-tried-button";
 import {
   TechniquePopover,
   useTechniqueHighlighter,
@@ -145,7 +147,12 @@ export function RecipeDetailClient({
               role="img"
               aria-label={recipe.title}
             />
-          ) : null}
+          ) : (
+            <div
+              className="mise-wood-grain h-3"
+              aria-hidden="true"
+            />
+          )}
           <div className="px-6 py-8 sm:px-10 sm:py-12">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-mise-accent">
               {recipe.cuisine ?? recipe.source}
@@ -190,7 +197,7 @@ export function RecipeDetailClient({
               ) : null}
             </div>
 
-            <div className="mt-7 flex flex-wrap items-center gap-2">
+            <div className="mt-7 flex flex-wrap items-center gap-2 print:hidden">
               <Link
                 href={`/recipes/${recipe.id}/cook`}
                 className="mise-btn-primary min-h-11 rounded-xl px-4 py-2.5 text-sm"
@@ -200,10 +207,27 @@ export function RecipeDetailClient({
               </Link>
               <AddToGrocery recipeId={recipe.id} />
               <RecipeStarButton recipeId={recipe.id} isStarred={recipe.is_starred} />
+              <RecipeTriedButton
+                recipeId={recipe.id}
+                hasTried={recipe.has_tried}
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  if (typeof window !== "undefined") {
+                    window.print();
+                  }
+                }}
+                className="mise-btn-secondary min-h-11 rounded-xl px-4 py-2.5 text-sm print:hidden"
+                title="Print this recipe"
+              >
+                <Printer size={16} aria-hidden="true" />
+                Print
+              </button>
               <button
                 type="button"
                 onClick={() => setIsEditing((current) => !current)}
-                className="mise-btn-secondary min-h-11 rounded-xl px-4 py-2.5 text-sm"
+                className="mise-btn-secondary min-h-11 rounded-xl px-4 py-2.5 text-sm print:hidden"
               >
                 {isEditing ? (
                   <X size={16} aria-hidden="true" />
@@ -243,7 +267,7 @@ export function RecipeDetailClient({
         </div>
 
         {isEditing ? (
-          <section className="mise-card mt-6 overflow-hidden rounded-2xl">
+          <section className="mise-card mt-6 overflow-hidden rounded-2xl print:hidden">
             <div className="border-b border-mise-border px-6 py-5">
               <h2 className="font-serif text-lg text-mise-ink">Edit recipe</h2>
             </div>
@@ -408,7 +432,7 @@ export function RecipeDetailClient({
           </section>
         ) : null}
 
-        <section className="mt-10 rounded-2xl border border-mise-border bg-mise-surface/60 p-5">
+        <section className="mt-10 rounded-2xl border border-mise-border bg-mise-surface/60 p-5 print:hidden">
           <details className="group">
             <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-medium text-mise-muted hover:text-mise-danger">
               <span>Delete this recipe</span>
@@ -454,14 +478,14 @@ export function RecipeDetailClient({
       <button
         type="button"
         onClick={() => setIsAssistantOpen((current) => !current)}
-        className="fixed bottom-[max(1.25rem,calc(env(safe-area-inset-bottom)+1rem))] right-[max(1.25rem,calc(env(safe-area-inset-right)+1rem))] z-30 mise-btn-primary rounded-full px-5 py-3 shadow-[var(--shadow-mise-float)]"
+        className="fixed bottom-[max(1.25rem,calc(env(safe-area-inset-bottom)+1rem))] right-[max(1.25rem,calc(env(safe-area-inset-right)+1rem))] z-30 mise-btn-primary rounded-full px-5 py-3 shadow-[var(--shadow-mise-float)] print:hidden"
       >
         <Bot size={17} aria-hidden="true" />
         Ask Mise
       </button>
 
       {isAssistantOpen ? (
-        <aside className="fixed inset-x-[max(0.75rem,calc(env(safe-area-inset-left)+1px))] bottom-[max(6rem,calc(env(safe-area-inset-bottom)+6rem))] z-30 mise-card max-h-[min(70vh,440px)] overflow-hidden rounded-2xl sm:inset-x-auto sm:right-[max(1rem,calc(env(safe-area-inset-right)+0.75rem))] sm:w-[400px]">
+        <aside className="fixed inset-x-[max(0.75rem,calc(env(safe-area-inset-left)+1px))] bottom-[max(6rem,calc(env(safe-area-inset-bottom)+6rem))] z-30 mise-card max-h-[min(70vh,440px)] overflow-hidden rounded-2xl sm:inset-x-auto sm:right-[max(1rem,calc(env(safe-area-inset-right)+0.75rem))] sm:w-[400px] print:hidden">
           <div className="flex items-center justify-between border-b border-mise-border px-4 py-3">
             <div className="flex items-center gap-2">
               <Bot size={17} className="text-mise-accent" aria-hidden="true" />

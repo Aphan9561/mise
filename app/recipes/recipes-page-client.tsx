@@ -8,12 +8,14 @@ import {
   BookOpen,
   Boxes,
   Compass,
+  Filter,
   Import,
   Loader2,
   Plus,
   Search,
   ShoppingBasket,
   Utensils,
+  X,
 } from "lucide-react";
 import {
   createRecipeAction,
@@ -70,7 +72,13 @@ export function RecipesPageClient({
   recipesErrorMessage,
 }: RecipesPageClientProps) {
   const router = useRouter();
-  const [listTab, setListTab] = useState<"all" | "starred">("all");
+  const [listTab, setListTab] = useState<"all" | "starred" | "tried" | "untried">(
+    "all",
+  );
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [cuisineFilter, setCuisineFilter] = useState("");
+  const [maxPrep, setMaxPrep] = useState<"" | "15" | "30" | "45" | "60">("");
   const [manualState, manualAction, isSavingManual] = useActionState(
     createRecipeAction,
     initialActionState,
@@ -84,12 +92,67 @@ export function RecipesPageClient({
   const [previewError, setPreviewError] = useState("");
   const [isPreviewing, setIsPreviewing] = useState(false);
 
+  const cuisineOptions = useMemo(() => {
+    const set = new Set<string>();
+    for (const r of recipes) {
+      const c = (r.cuisine ?? "").trim();
+      if (c) set.add(c);
+    }
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [recipes]);
+
+  const filteredByQuery = useMemo(() => {
+    const q = searchQuery.trim().toLowerCase();
+    const limit = maxPrep ? Number(maxPrep) : null;
+    return recipes.filter((r) => {
+      if (q) {
+        const haystack = `${r.title} ${r.description ?? ""} ${
+          r.cuisine ?? ""
+        } ${r.ingredients.join(" ")}`.toLowerCase();
+        if (!haystack.includes(q)) return false;
+      }
+      if (cuisineFilter && (r.cuisine ?? "").trim() !== cuisineFilter) {
+        return false;
+      }
+      if (limit !== null) {
+        const minutes = r.prep_minutes ?? Infinity;
+        if (minutes > limit) return false;
+      }
+      return true;
+    });
+  }, [recipes, searchQuery, cuisineFilter, maxPrep]);
+
   const starredRecipes = useMemo(
-    () => recipes.filter((r) => r.is_starred),
-    [recipes],
+    () => filteredByQuery.filter((r) => r.is_starred),
+    [filteredByQuery],
+  );
+  const triedRecipes = useMemo(
+    () => filteredByQuery.filter((r) => r.has_tried),
+    [filteredByQuery],
+  );
+  const untriedRecipes = useMemo(
+    () => filteredByQuery.filter((r) => !r.has_tried),
+    [filteredByQuery],
   );
   const visibleRecipes =
-    listTab === "starred" ? starredRecipes : recipes;
+    listTab === "starred"
+      ? starredRecipes
+      : listTab === "tried"
+        ? triedRecipes
+        : listTab === "untried"
+          ? untriedRecipes
+          : filteredByQuery;
+
+  const activeFilterCount =
+    (searchQuery.trim() ? 1 : 0) +
+    (cuisineFilter ? 1 : 0) +
+    (maxPrep ? 1 : 0);
+
+  function resetFilters() {
+    setSearchQuery("");
+    setCuisineFilter("");
+    setMaxPrep("");
+  }
 
   useEffect(() => {
     if (manualState.status === "success" || importState.status === "success") {
@@ -366,6 +429,27 @@ export function RecipesPageClient({
             </div>
             <div className="flex flex-wrap items-center gap-2">
               {recipes.length > 0 ? (
+                <button
+                  type="button"
+                  onClick={() => setFiltersOpen((o) => !o)}
+                  aria-expanded={filtersOpen}
+                  aria-controls="cookbook-filters"
+                  className={`mise-btn-secondary rounded-full py-2 pl-3 pr-3 text-sm ${
+                    activeFilterCount > 0
+                      ? "border-mise-accent/40 bg-mise-chip text-mise-chip-text"
+                      : ""
+                  }`}
+                >
+                  <Filter size={16} aria-hidden="true" />
+                  Filters
+                  {activeFilterCount > 0 ? (
+                    <span className="ml-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-mise-accent px-1.5 text-[10px] font-semibold text-white">
+                      {activeFilterCount}
+                    </span>
+                  ) : null}
+                </button>
+              ) : null}
+              {recipes.length > 0 ? (
                 <div
                   role="tablist"
                   aria-label="Filter recipes"
@@ -397,6 +481,32 @@ export function RecipesPageClient({
                   >
                     Favorites ({starredRecipes.length})
                   </button>
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={listTab === "tried"}
+                    onClick={() => setListTab("tried")}
+                    className={`rounded-full px-3 py-2 text-xs font-semibold transition sm:text-sm ${
+                      listTab === "tried"
+                        ? "bg-mise-forest text-white"
+                        : "text-mise-muted hover:text-mise-ink"
+                    }`}
+                  >
+                    Tried ({triedRecipes.length})
+                  </button>
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={listTab === "untried"}
+                    onClick={() => setListTab("untried")}
+                    className={`rounded-full px-3 py-2 text-xs font-semibold transition sm:text-sm ${
+                      listTab === "untried"
+                        ? "bg-mise-forest text-white"
+                        : "text-mise-muted hover:text-mise-ink"
+                    }`}
+                  >
+                    To try ({untriedRecipes.length})
+                  </button>
                 </div>
               ) : null}
               <Link
@@ -408,6 +518,93 @@ export function RecipesPageClient({
               </Link>
             </div>
           </div>
+
+          {filtersOpen && recipes.length > 0 ? (
+            <div
+              id="cookbook-filters"
+              className="border-b border-mise-border bg-mise-surface-soft/70 px-6 py-5"
+            >
+              <div className="mb-3 flex items-center justify-between">
+                <h3 className="text-sm font-semibold text-mise-ink">
+                  Filter your cookbook
+                </h3>
+                <div className="flex items-center gap-2">
+                  {activeFilterCount > 0 ? (
+                    <button
+                      type="button"
+                      onClick={resetFilters}
+                      className="text-xs font-medium text-mise-accent hover:text-mise-accent-hover"
+                    >
+                      Reset
+                    </button>
+                  ) : null}
+                  <button
+                    type="button"
+                    onClick={() => setFiltersOpen(false)}
+                    className="grid size-8 place-items-center rounded-full text-mise-muted hover:text-mise-ink"
+                    aria-label="Close filters"
+                  >
+                    <X size={14} aria-hidden="true" />
+                  </button>
+                </div>
+              </div>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <label className="mise-label normal-case">
+                  Search
+                  <div className="relative">
+                    <input
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="mise-input pl-8"
+                      placeholder="Title, cuisine, ingredient…"
+                    />
+                    <Search
+                      size={14}
+                      aria-hidden="true"
+                      className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-mise-muted"
+                    />
+                  </div>
+                </label>
+                <label className="mise-label normal-case">
+                  Cuisine
+                  <select
+                    value={cuisineFilter}
+                    onChange={(e) => setCuisineFilter(e.target.value)}
+                    className="mise-input"
+                  >
+                    <option value="">Any</option>
+                    {cuisineOptions.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="mise-label normal-case">
+                  Max time
+                  <select
+                    value={maxPrep}
+                    onChange={(e) =>
+                      setMaxPrep(e.target.value as typeof maxPrep)
+                    }
+                    className="mise-input"
+                  >
+                    <option value="">Any</option>
+                    <option value="15">15 min or less</option>
+                    <option value="30">30 min or less</option>
+                    <option value="45">45 min or less</option>
+                    <option value="60">1 hr or less</option>
+                  </select>
+                </label>
+              </div>
+              <p
+                className="mt-3 text-xs text-mise-muted tabular-nums"
+                aria-live="polite"
+              >
+                {visibleRecipes.length} of {recipes.length} recipes
+              </p>
+            </div>
+          ) : null}
 
           {recipes.length === 0 ? (
             <div className="grid min-h-[400px] place-items-center p-10 text-center">
@@ -435,11 +632,32 @@ export function RecipesPageClient({
                   aria-hidden="true"
                 />
                 <h3 className="mt-5 font-serif text-2xl text-mise-ink">
-                  No favorites yet
+                  {activeFilterCount > 0
+                    ? "Nothing matches those filters"
+                    : listTab === "starred"
+                      ? "No favorites yet"
+                      : listTab === "tried"
+                        ? "Nothing marked tried yet"
+                        : "Nothing left to try"}
                 </h3>
                 <p className="mt-2 text-sm leading-relaxed text-mise-muted">
-                  Star recipes from a recipe page to keep them pinned here.
+                  {activeFilterCount > 0
+                    ? "Loosen your search, cuisine, or max-time filters to see more."
+                    : listTab === "starred"
+                      ? "Star recipes from a recipe page to keep them pinned here."
+                      : listTab === "tried"
+                        ? "Open a recipe and tap “Mark as tried” after you’ve cooked it."
+                        : "You’ve marked every recipe as tried — nice work."}
                 </p>
+                {activeFilterCount > 0 ? (
+                  <button
+                    type="button"
+                    onClick={resetFilters}
+                    className="mise-btn-secondary mt-4 text-sm"
+                  >
+                    Reset filters
+                  </button>
+                ) : null}
               </div>
             </div>
           ) : (

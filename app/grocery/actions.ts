@@ -8,6 +8,8 @@ import {
   deleteGroceryItem,
   getGroceryItem,
   listGroceryItems,
+  setGroceryItemChecked,
+  type GroceryItem,
 } from "@/lib/supabase/grocery";
 import { getUserRecipe } from "@/lib/supabase/recipes";
 import {
@@ -38,6 +40,10 @@ function formatGroceryError(error: unknown) {
   return message;
 }
 
+function findGroceryRowByKey(items: GroceryItem[], key: string) {
+  return items.find((row) => groceryCompareKey(row.name) === key);
+}
+
 export async function createGroceryItemAction(
   _previousState: GroceryActionState,
   formData: FormData,
@@ -65,14 +71,16 @@ export async function createGroceryItemAction(
   try {
     const existing = await listGroceryItems(userId);
     const key = groceryCompareKey(cleanedName);
-    const duplicate = existing.items.some(
-      (row) => !row.is_checked && groceryCompareKey(row.name) === key,
-    );
+    const duplicate = findGroceryRowByKey(existing.items, key);
 
     if (duplicate) {
+      await setGroceryItemChecked(userId, duplicate.id, false);
+      revalidatePath("/grocery");
+      const state =
+        duplicate.is_checked === true ? "Unchecked it so it shows again." : "Already there — left unchecked.";
       return {
         status: "success",
-        message: `${cleanedName} is already on your grocery list.`,
+        message: `${cleanedName} is already on your list. ${state}`,
       };
     }
 
@@ -93,6 +101,29 @@ export async function createGroceryItemAction(
       message: `Could not add item: ${formatGroceryError(error)}`,
     };
   }
+}
+
+export async function toggleGroceryItemCheckedAction(formData: FormData) {
+  const { userId } = await auth();
+
+  if (!userId) {
+    throw new Error("Sign in to update your grocery list.");
+  }
+
+  const itemId = String(formData.get("itemId") ?? "").trim();
+
+  if (!itemId) {
+    throw new Error("Missing item ID.");
+  }
+
+  const item = await getGroceryItem(userId, itemId);
+
+  if (!item) {
+    return;
+  }
+
+  await setGroceryItemChecked(userId, itemId, !item.is_checked);
+  revalidatePath("/grocery");
 }
 
 export async function checkOffGroceryItemAction(formData: FormData) {
@@ -211,13 +242,9 @@ export async function addRecipeToGroceryAction(
     const pantrySkipped = matches.length - toConsider.length;
 
     const groceries = await listGroceryItems(userId);
-    const keysOnList = new Set(
-      groceries.items
-        .filter((row) => !row.is_checked)
-        .map((row) => groceryCompareKey(row.name)),
-    );
 
-    const seenInBatch = new Set<string>();
+    /** One pass per canonical item (dedupe within this recipe payload). */
+    const handledKeys = new Set<string>();
     const bulkRows: {
       clerkUserId: string;
       name: string;
@@ -226,16 +253,27 @@ export async function addRecipeToGroceryAction(
       recipeTitle: string;
     }[] = [];
 
-    let duplicateSkipped = 0;
+    let reopenedOnList = 0;
+    let duplicateRecipeLines = 0;
 
     for (const match of toConsider) {
       const canonicalName = groceryItemDisplayName(match.parsed.raw);
       const key = groceryCompareKey(canonicalName);
-      if (keysOnList.has(key) || seenInBatch.has(key)) {
-        duplicateSkipped += 1;
+
+      if (handledKeys.has(key)) {
+        duplicateRecipeLines += 1;
         continue;
       }
-      seenInBatch.add(key);
+
+      handledKeys.add(key);
+
+      const existingRow = findGroceryRowByKey(groceries.items, key);
+      if (existingRow) {
+        reopenedOnList += 1;
+        await setGroceryItemChecked(userId, existingRow.id, false);
+        continue;
+      }
+
       bulkRows.push({
         clerkUserId: userId,
         name: canonicalName,
@@ -245,45 +283,62 @@ export async function addRecipeToGroceryAction(
       });
     }
 
-    if (bulkRows.length === 0) {
+    const added = bulkRows.length;
+    const skippedTotal = pantrySkipped + duplicateRecipeLines;
+
+    if (bulkRows.length > 0) {
+      await createGroceryItemsBulk(bulkRows);
+    }
+
+    revalidatePath("/grocery");
+
+    if (bulkRows.length === 0 && reopenedOnList === 0) {
       let message: string;
       if (pantrySkipped >= matches.length && matches.length > 0) {
         message = `Everything for ${recipe.title} is already in your pantry.`;
-      } else if (duplicateSkipped > 0) {
-        message = `Those items are already on your grocery list for ${recipe.title}.`;
       } else {
         message = `Nothing new to add for ${recipe.title}.`;
       }
+
       return {
         status: "success",
         message,
         added: 0,
-        skipped: pantrySkipped + duplicateSkipped,
+        skipped: skippedTotal,
       };
     }
 
-    await createGroceryItemsBulk(bulkRows);
-
-    revalidatePath("/grocery");
-
-    const skippedTotal = pantrySkipped + duplicateSkipped;
     const dupPart =
-      duplicateSkipped > 0
-        ? `${duplicateSkipped} duplicate${duplicateSkipped === 1 ? "" : "s"} skipped`
+      reopenedOnList > 0
+        ? `${reopenedOnList} already on list — left unchecked`
         : "";
     const panPart =
-      pantrySkipped > 0
-        ? `${pantrySkipped} already in pantry`
-        : "";
+      pantrySkipped > 0 ? `${pantrySkipped} already in pantry` : "";
     const extras = [panPart, dupPart].filter(Boolean).join("; ");
+
+    if (bulkRows.length === 0 && reopenedOnList > 0) {
+      const msg =
+        reopenedOnList === 1
+          ? "Already on your list — left that item unchecked."
+          : `${reopenedOnList} ingredients were already on your list — left them unchecked.`;
+
+      return {
+        status: "success",
+        message: msg,
+        added: 0,
+        skipped: skippedTotal,
+      };
+    }
+
+    const base =
+      bulkRows.length === 1
+        ? `Added 1 ingredient from ${recipe.title}.`
+        : `Added ${bulkRows.length} ingredients from ${recipe.title}.`;
 
     return {
       status: "success",
-      message:
-        extras.length > 0
-          ? `Added ${bulkRows.length} from ${recipe.title}. (${extras})`
-          : `Added ${bulkRows.length} ingredients from ${recipe.title}.`,
-      added: bulkRows.length,
+      message: extras.length > 0 ? `${base} (${extras})` : base,
+      added,
       skipped: skippedTotal,
     };
   } catch (error) {

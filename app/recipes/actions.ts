@@ -7,6 +7,7 @@ import {
   createUserRecipe,
   deleteUserRecipe,
   toggleRecipeStarred,
+  toggleRecipeTried,
   updateUserRecipe,
 } from "@/lib/supabase/recipes";
 import { importRecipeFromUrl } from "@/lib/cooking/import-url";
@@ -57,9 +58,10 @@ function formatRecipeError(error: unknown) {
   }
   if (
     message.toLowerCase().includes("is_starred") ||
+    message.toLowerCase().includes("has_tried") ||
     (message.includes("column") && message.includes("does not exist"))
   ) {
-    return "Apply the latest recipes table changes (is_starred) from supabase/schema.sql.";
+    return "Apply the latest recipes table changes (is_starred, has_tried) from supabase/schema.sql.";
   }
 
   return message;
@@ -337,6 +339,37 @@ export async function toggleRecipeStarAction(recipeId: string): Promise<{
     revalidatePath(`/recipes/${id}`);
 
     return { ok: true, isStarred: updated.is_starred };
+  } catch (error) {
+    return {
+      ok: false,
+      message: formatRecipeError(error),
+    };
+  }
+}
+
+export async function toggleRecipeTriedAction(recipeId: string): Promise<{
+  ok: boolean;
+  hasTried?: boolean;
+  message?: string;
+}> {
+  const { userId } = await auth();
+
+  if (!userId) {
+    return { ok: false, message: "You need to be signed in." };
+  }
+
+  const id = recipeId.trim();
+
+  if (!id) {
+    return { ok: false, message: "Missing recipe." };
+  }
+
+  try {
+    const updated = await toggleRecipeTried(userId, id);
+    revalidatePath("/recipes");
+    revalidatePath(`/recipes/${id}`);
+
+    return { ok: true, hasTried: updated.has_tried };
   } catch (error) {
     return {
       ok: false,

@@ -38,7 +38,7 @@ Discovery uses [TheMealDB](https://www.themealdb.com/api.php) (no key). If their
 Important tables included in `schema.sql`:
 
 - `profiles` — optional user profile synced with Clerk (`clerk_user_id`).
-- `recipes` — personal cookbook (`is_starred` for favorites, ingredients/instructions arrays, URLs, notes).
+- `recipes` — personal cookbook (`is_starred` for favorites, `has_tried` for the “Tried” tag, ingredients/instructions arrays, URLs, notes).
 - `pantry_items` — what you already have at home.
 - `grocery_items` — shopping list linked optionally to `recipes`; checking an item moves it into the pantry.
 

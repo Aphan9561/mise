@@ -14,6 +14,7 @@ export type UserRecipe = {
   source: string;
   source_url: string | null;
   is_starred: boolean;
+  has_tried: boolean;
   created_at: string;
   updated_at: string;
 };
@@ -80,6 +81,7 @@ export async function listUserRecipes(
     recipes: (data ?? []).map((row) => ({
       ...(row as UserRecipe),
       is_starred: Boolean((row as UserRecipe).is_starred),
+      has_tried: Boolean((row as UserRecipe).has_tried),
     })),
     missingTable: false,
     errorMessage: null,
@@ -107,6 +109,7 @@ export async function getUserRecipe(clerkUserId: string, recipeId: string) {
   return {
     ...data,
     is_starred: Boolean(data.is_starred),
+    has_tried: Boolean(data.has_tried),
   };
 }
 
@@ -151,6 +154,31 @@ export async function toggleRecipeStarred(clerkUserId: string, recipeId: string)
   const { data, error } = await supabase
     .from("recipes")
     .update({ is_starred: next })
+    .eq("id", recipeId)
+    .eq("clerk_user_id", clerkUserId)
+    .select()
+    .single<UserRecipe>();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}
+
+export async function toggleRecipeTried(clerkUserId: string, recipeId: string) {
+  const supabase = createAdminSupabaseClient();
+  const current = await getUserRecipe(clerkUserId, recipeId);
+
+  if (!current) {
+    throw new Error("Recipe not found");
+  }
+
+  const next = !(current.has_tried ?? false);
+
+  const { data, error } = await supabase
+    .from("recipes")
+    .update({ has_tried: next })
     .eq("id", recipeId)
     .eq("clerk_user_id", clerkUserId)
     .select()

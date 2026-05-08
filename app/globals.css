@@ -1,10 +1,10 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f4f2ed;
-  --foreground: #1a2320;
-  --selection-bg: #d4a574;
-  --selection-fg: #1a2320;
+  --background: #f1e9d8;
+  --foreground: #1f1812;
+  --selection-bg: #c89d6a;
+  --selection-fg: #1f1812;
 }
 
 @theme inline {
@@ -13,33 +13,41 @@
   --font-sans: var(--font-manrope), ui-sans-serif, system-ui, sans-serif;
   --font-serif: var(--font-fraunces), ui-serif, Georgia, serif;
 
-  --color-mise-page: #f4f2ed;
-  --color-mise-ink: #1a2320;
-  --color-mise-muted: #5e6e68;
-  --color-mise-surface: #ffffff;
-  --color-mise-surface-soft: #f9f8f5;
-  --color-mise-border: #dfe3df;
+  --color-mise-page: #f1e9d8;
+  --color-mise-ink: #1f1812;
+  --color-mise-muted: #6c5e4f;
+  --color-mise-surface: #fdf9ef;
+  --color-mise-surface-soft: #f4ebd6;
+  --color-mise-border: #ddd0b6;
   --color-mise-accent: #2a6b52;
   --color-mise-accent-hover: #225544;
   --color-mise-forest: #1e4d3d;
   --color-mise-warm: #c2573d;
   --color-mise-warm-hover: #a34730;
-  --color-mise-chip: #e4f0ea;
+  --color-mise-chip: #e8efde;
   --color-mise-chip-text: #1e4d3d;
   --color-mise-danger: #b4533a;
-  --color-mise-danger-bg: #fdeede;
+  --color-mise-danger-bg: #fbe2cd;
   --color-mise-danger-border: #e8c9b8;
-  --color-mise-success-bg: #e6f3eb;
-  --color-mise-success-text: #25633a;
-  --color-mise-warn-bg: #fff4e8;
-  --color-mise-warn-text: #7a4a22;
-  --color-mise-technique: #d4ebe3;
-  --color-mise-technique-hover: #bddfd2;
-  --color-mise-technique-text: #0f4d3e;
-  --color-mise-chat-user: #1e4d3d;
-  --color-mise-chat-assistant: #eef4f0;
-  --shadow-mise-card: 0 2px 14px rgba(26, 35, 32, 0.06);
-  --shadow-mise-float: 0 18px 48px rgba(26, 35, 32, 0.14);
+  --color-mise-success-bg: #e7efd8;
+  --color-mise-success-text: #2c5a2e;
+  --color-mise-warn-bg: #f7e6c2;
+  --color-mise-warn-text: #6e4d1f;
+  --color-mise-technique: #ead8b3;
+  --color-mise-technique-hover: #ddc28e;
+  --color-mise-technique-text: #5a4019;
+  --color-mise-chat-user: #5a3b22;
+  --color-mise-chat-assistant: #f1e6c9;
+
+  /* Wood tones: light oak through walnut. */
+  --color-mise-oak: #d6b78a;
+  --color-mise-oak-soft: #ebd6b2;
+  --color-mise-walnut: #6f4a2c;
+  --color-mise-walnut-soft: #a07452;
+  --color-mise-cream: #faf3e3;
+
+  --shadow-mise-card: 0 2px 14px rgba(94, 65, 32, 0.09);
+  --shadow-mise-float: 0 18px 48px rgba(94, 65, 32, 0.18);
 }
 
 * {
@@ -94,19 +102,101 @@ button {
     @apply inline-flex items-center justify-center gap-2 rounded-xl bg-mise-warm px-4 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-mise-warm-hover disabled:cursor-not-allowed disabled:opacity-45;
   }
   .mise-header {
-    @apply border-b border-mise-border bg-mise-surface/90 backdrop-blur-md;
+    @apply border-b border-mise-border bg-mise-surface/85 backdrop-blur-md;
+    background-image:
+      repeating-linear-gradient(
+        90deg,
+        rgba(111, 74, 44, 0.045) 0,
+        rgba(111, 74, 44, 0.045) 1px,
+        transparent 1px,
+        transparent 5px
+      ),
+      repeating-linear-gradient(
+        90deg,
+        rgba(111, 74, 44, 0.06) 0,
+        rgba(111, 74, 44, 0.06) 1px,
+        transparent 1px,
+        transparent 23px
+      );
+  }
+  .mise-wood-grain {
+    background-image:
+      repeating-linear-gradient(
+        90deg,
+        rgba(111, 74, 44, 0.05) 0,
+        rgba(111, 74, 44, 0.05) 1px,
+        transparent 1px,
+        transparent 5px
+      ),
+      repeating-linear-gradient(
+        90deg,
+        rgba(111, 74, 44, 0.08) 0,
+        rgba(111, 74, 44, 0.08) 1px,
+        transparent 1px,
+        transparent 23px
+      ),
+      linear-gradient(180deg, #f7ecd2 0%, #efe0c0 100%);
   }
   .mise-hero-gradient {
     background: radial-gradient(
         120% 80% at 85% 5%,
-        rgba(194, 87, 61, 0.09),
+        rgba(194, 87, 61, 0.12),
         transparent 50%
       ),
       radial-gradient(
         70% 50% at 10% 10%,
-        rgba(42, 107, 82, 0.1),
+        rgba(160, 116, 82, 0.18),
         transparent 45%
       ),
-      linear-gradient(180deg, #faf7f1 0%, var(--background) 55%);
+      linear-gradient(180deg, #fbf3df 0%, var(--background) 55%);
+  }
+}
+
+@media print {
+  html,
+  body {
+    background: #ffffff !important;
+    color: #111111 !important;
+  }
+
+  /* Hide every page chrome element except the recipe surface. */
+  .mise-header,
+  .print\:hidden {
+    display: none !important;
+  }
+
+  .mise-wood-grain,
+  .mise-hero-gradient {
+    background-image: none !important;
+    background: #ffffff !important;
+  }
+
+  .mise-card,
+  .mise-card * {
+    box-shadow: none !important;
+    background-image: none !important;
+  }
+
+  .mise-card {
+    border: 1px solid #c7c7c7 !important;
+    background: #ffffff !important;
+  }
+
+  a[href]::after {
+    content: "" !important;
+  }
+
+  /* Allow long content to break across pages. */
+  article,
+  section,
+  ol,
+  ul,
+  li {
+    page-break-inside: avoid;
+  }
+
+  ol,
+  ul {
+    page-break-inside: auto;
   }
 }

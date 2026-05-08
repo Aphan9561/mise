@@ -56,6 +56,9 @@ add column if not exists notes text;
 alter table public.recipes
 add column if not exists is_starred boolean not null default false;
 
+alter table public.recipes
+add column if not exists has_tried boolean not null default false;
+
 create index if not exists recipes_clerk_user_id_idx
 on public.recipes (clerk_user_id);
 
