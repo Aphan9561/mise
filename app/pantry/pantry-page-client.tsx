@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useState } from "react";
+import { useActionState, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { UserButton } from "@clerk/nextjs";
@@ -9,11 +9,12 @@ import {
   Loader2,
   Pencil,
   Plus,
-  ShoppingBasket,
+  Search,
   Trash2,
   Utensils,
   X,
 } from "lucide-react";
+import { SectionNav } from "@/app/components/section-nav";
 import {
   createPantryItemAction,
   deletePantryItemAction,
@@ -69,6 +70,64 @@ const initialState: PantryActionState = {
   message: "",
 };
 
+function startOfTodayMs() {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d.getTime();
+}
+
+/** Positive = future; negative = overdue. */
+function pantryDaysRemaining(expiresOn: string | null): number | null {
+  const raw = (expiresOn ?? "").trim();
+  if (!raw) {
+    return null;
+  }
+  const t = new Date(`${raw}T12:00:00`).getTime();
+  if (!Number.isFinite(t)) {
+    return null;
+  }
+  return Math.ceil((t - startOfTodayMs()) / 86_400_000);
+}
+
+const EXPIRING_FILTER_DAYS = 14;
+
+type PantryTab = "all" | "expiring" | "staples";
+
+function PantryExpiryBadge({ expiresOn }: { expiresOn: string | null }) {
+  const days = pantryDaysRemaining(expiresOn);
+  if (days === null) {
+    return null;
+  }
+  if (days < 0) {
+    return (
+      <span
+        className="rounded-sm border border-mise-danger bg-mise-danger-bg px-1.5 py-0.5 text-[10px] font-semibold uppercase text-mise-danger"
+        style={{ letterSpacing: "0.1em" }}
+      >
+        Expired
+      </span>
+    );
+  }
+  if (days <= EXPIRING_FILTER_DAYS) {
+    return (
+      <span
+        className="rounded-sm border border-mise-warm bg-mise-warn-bg px-1.5 py-0.5 text-[10px] font-semibold uppercase text-mise-warn-text"
+        style={{ letterSpacing: "0.08em" }}
+      >
+        Use soon ({days === 0 ? "today" : `${days}d`})
+      </span>
+    );
+  }
+  return (
+    <span
+      className="rounded-sm border border-mise-border px-1.5 py-0.5 text-[10px] font-semibold uppercase text-mise-muted"
+      style={{ letterSpacing: "0.08em" }}
+    >
+      {days}d left
+    </span>
+  );
+}
+
 function ActionMessage({ state }: { state: PantryActionState }) {
   if (!state.message) {
     return null;
@@ -104,6 +163,53 @@ export function PantryPageClient({
   );
   const [editingId, setEditingId] = useState<string | null>(null);
   const [lastUpdateStatus, setLastUpdateStatus] = useState(updateState.status);
+  const [pantryTab, setPantryTab] = useState<PantryTab>("all");
+  const [pantrySearch, setPantrySearch] = useState("");
+
+  const visibleItems = useMemo(() => {
+    const q = pantrySearch.trim().toLowerCase();
+    let rows = [...items];
+
+    if (q) {
+      rows = rows.filter((it) =>
+        `${it.name} ${it.quantity ?? ""} ${it.unit ?? ""} ${it.notes ?? ""}`
+          .toLowerCase()
+          .includes(q),
+      );
+    }
+
+    if (pantryTab === "staples") {
+      rows = rows.filter((it) => !(it.expires_on ?? "").trim());
+    } else if (pantryTab === "expiring") {
+      rows = rows.filter((it) => {
+        const d = pantryDaysRemaining(it.expires_on);
+        return d !== null && d <= EXPIRING_FILTER_DAYS;
+      });
+      rows.sort(
+        (a, b) =>
+          (pantryDaysRemaining(a.expires_on) ?? 99_999) -
+          (pantryDaysRemaining(b.expires_on) ?? 99_999),
+      );
+    } else {
+      rows.sort((a, b) => a.name.localeCompare(b.name));
+    }
+
+    return rows;
+  }, [items, pantrySearch, pantryTab]);
+
+  const expiringSoonCount = useMemo(
+    () =>
+      items.filter((it) => {
+        const d = pantryDaysRemaining(it.expires_on);
+        return d !== null && d <= EXPIRING_FILTER_DAYS && d >= -30;
+      }).length,
+    [items],
+  );
+
+  const staplesCount = useMemo(
+    () => items.filter((it) => !(it.expires_on ?? "").trim()).length,
+    [items],
+  );
 
   if (updateState.status !== lastUpdateStatus) {
     setLastUpdateStatus(updateState.status);
@@ -140,20 +246,8 @@ export function PantryPageClient({
               </p>
             </div>
           </Link>
-          <div className="flex items-center gap-2">
-            <Link
-              href="/recipes"
-              className="mise-btn-secondary py-2 pl-3 pr-4 text-sm"
-            >
-              Cookbook
-            </Link>
-            <Link
-              href="/grocery"
-              className="mise-btn-secondary py-2 pl-3 pr-4 text-sm"
-            >
-              <ShoppingBasket size={16} aria-hidden="true" />
-              Grocery
-            </Link>
+          <div className="flex items-center gap-3">
+            <SectionNav />
             <UserButton />
           </div>
         </div>
@@ -240,12 +334,82 @@ export function PantryPageClient({
         </aside>
 
         <section className="mise-card min-h-[min(70vh,560px)] overflow-hidden rounded-2xl">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-mise-border px-6 py-5">
-            <div className="flex items-center gap-2">
-              <Boxes size={18} className="text-mise-accent" aria-hidden="true" />
-              <h2 className="font-serif text-lg text-mise-ink">
-                What you have ({items.length})
-              </h2>
+          <div className="flex flex-col gap-3 border-b border-mise-border px-6 py-5">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <Boxes
+                  size={18}
+                  className="text-mise-accent"
+                  aria-hidden="true"
+                />
+                <h2 className="font-serif text-lg text-mise-ink">
+                  What you have ({visibleItems.length}
+                  {items.length !== visibleItems.length
+                    ? ` of ${items.length}`
+                    : ""}
+                  )
+                </h2>
+              </div>
+            </div>
+            <div
+              role="tablist"
+              aria-label="Filter pantry"
+              className="flex flex-wrap gap-2"
+            >
+              {(
+                [
+                  { id: "all" as const, label: "All", count: items.length },
+                  {
+                    id: "expiring" as const,
+                    label: "Expiring soon",
+                    count: expiringSoonCount,
+                  },
+                  { id: "staples" as const, label: "No date", count: staplesCount },
+                ] as const
+              ).map((tab) => {
+                const selected = pantryTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={selected}
+                    onClick={() => setPantryTab(tab.id)}
+                    className={`inline-flex items-center gap-1 rounded-md border px-2.5 py-1.5 text-[11px] font-semibold uppercase ${
+                      selected
+                        ? "border-mise-accent bg-mise-accent text-mise-page"
+                        : "border-mise-border bg-mise-surface text-mise-muted hover:border-mise-ink hover:text-mise-ink"
+                    }`}
+                    style={{ letterSpacing: "0.12em" }}
+                  >
+                    <span>{tab.label}</span>
+                    <span
+                      className={`tabular-nums ${
+                        selected ? "text-mise-page/80" : "text-mise-muted"
+                      }`}
+                    >
+                      ({tab.count})
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            <div className="relative">
+              <label className="sr-only" htmlFor="pantry-search">
+                Search pantry
+              </label>
+              <Search
+                size={14}
+                aria-hidden="true"
+                className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-mise-muted"
+              />
+              <input
+                id="pantry-search"
+                value={pantrySearch}
+                onChange={(e) => setPantrySearch(e.target.value)}
+                placeholder="Search name, notes, unit…"
+                className="mise-input pl-8"
+              />
             </div>
           </div>
 
@@ -273,9 +437,36 @@ export function PantryPageClient({
                 </p>
               </div>
             </div>
+          ) : visibleItems.length === 0 ? (
+            <div className="grid min-h-[320px] place-items-center p-10 text-center">
+              <div className="max-w-sm">
+                <Search
+                  className="mx-auto text-mise-muted/50"
+                  size={36}
+                  aria-hidden="true"
+                />
+                <h3 className="mt-4 font-serif text-xl text-mise-ink">
+                  Nothing matches
+                </h3>
+                <p className="mt-2 text-sm text-mise-muted">
+                  Try another search or switch back to{" "}
+                  <button
+                    type="button"
+                    className="font-semibold text-mise-ink underline underline-offset-2"
+                    onClick={() => {
+                      setPantryTab("all");
+                      setPantrySearch("");
+                    }}
+                  >
+                    All
+                  </button>
+                  .
+                </p>
+              </div>
+            </div>
           ) : (
             <ul className="divide-y divide-mise-border">
-              {items.map((item) => (
+              {visibleItems.map((item) => (
                 <li key={item.id} className="px-6 py-4">
                   {editingId === item.id ? (
                     <form action={updateAction} className="space-y-3">
@@ -357,14 +548,17 @@ export function PantryPageClient({
                   ) : (
                     <div className="flex flex-wrap items-start justify-between gap-4">
                       <div className="min-w-0 flex-1">
-                        <p className="font-medium text-mise-ink">{item.name}</p>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <p className="font-medium text-mise-ink">
+                            {item.name}
+                          </p>
+                          <PantryExpiryBadge expiresOn={item.expires_on} />
+                        </div>
                         <p className="mt-1 text-sm text-mise-muted">
                           {[item.quantity, item.unit]
                             .filter(Boolean)
                             .join(" ") || "no quantity set"}
-                          {item.expires_on
-                            ? ` · expires ${item.expires_on}`
-                            : ""}
+                          {item.expires_on ? ` · ${item.expires_on}` : ""}
                         </p>
                         {item.notes ? (
                           <p className="mt-1 text-xs text-mise-muted">

@@ -6,17 +6,19 @@ import { useRouter } from "next/navigation";
 import { UserButton } from "@clerk/nextjs";
 import {
   BookOpen,
-  Boxes,
-  Compass,
+  CheckCircle2,
+  Circle,
   Filter,
   Import,
+  LayoutGrid,
   Loader2,
   Plus,
   Search,
-  ShoppingBasket,
+  Star,
   Utensils,
   X,
 } from "lucide-react";
+import { SectionNav } from "@/app/components/section-nav";
 import {
   createRecipeAction,
   importRecipeFromUrlAction,
@@ -209,28 +211,8 @@ export function RecipesPageClient({
               </p>
             </div>
           </Link>
-          <div className="flex items-center gap-2">
-            <Link
-              href="/pantry"
-              className="mise-btn-secondary py-2 pl-3 pr-4 text-sm"
-            >
-              <Boxes size={16} aria-hidden="true" />
-              Pantry
-            </Link>
-            <Link
-              href="/grocery"
-              className="mise-btn-secondary py-2 pl-3 pr-4 text-sm"
-            >
-              <ShoppingBasket size={16} aria-hidden="true" />
-              Grocery
-            </Link>
-            <Link
-              href="/discover"
-              className="mise-btn-secondary py-2 pl-3 pr-4 text-sm"
-            >
-              <Compass size={16} aria-hidden="true" />
-              Discover
-            </Link>
+          <div className="flex items-center gap-3">
+            <SectionNav />
             <UserButton />
           </div>
         </div>
@@ -453,69 +435,83 @@ export function RecipesPageClient({
                 <div
                   role="tablist"
                   aria-label="Filter recipes"
-                  className="flex divide-x divide-mise-border rounded-md border border-mise-border bg-mise-surface"
+                  className="flex flex-wrap items-center gap-1.5"
                 >
-                  <button
-                    type="button"
-                    role="tab"
-                    aria-selected={listTab === "all"}
-                    onClick={() => setListTab("all")}
-                    className={`px-3 py-2 text-[11px] font-semibold uppercase transition sm:text-xs ${
-                      listTab === "all"
-                        ? "bg-mise-accent/10 text-mise-accent"
-                        : "text-mise-muted hover:text-mise-ink"
-                    }`}
-                  >
-                    All ({recipes.length})
-                  </button>
-                  <button
-                    type="button"
-                    role="tab"
-                    aria-selected={listTab === "starred"}
-                    onClick={() => setListTab("starred")}
-                    className={`px-3 py-2 text-[11px] font-semibold uppercase transition sm:text-xs ${
-                      listTab === "starred"
-                        ? "bg-mise-accent/10 text-mise-accent"
-                        : "text-mise-muted hover:text-mise-ink"
-                    }`}
-                  >
-                    Favorites ({starredRecipes.length})
-                  </button>
-                  <button
-                    type="button"
-                    role="tab"
-                    aria-selected={listTab === "tried"}
-                    onClick={() => setListTab("tried")}
-                    className={`px-3 py-2 text-[11px] font-semibold uppercase transition sm:text-xs ${
-                      listTab === "tried"
-                        ? "bg-mise-accent/10 text-mise-accent"
-                        : "text-mise-muted hover:text-mise-ink"
-                    }`}
-                  >
-                    Tried ({triedRecipes.length})
-                  </button>
-                  <button
-                    type="button"
-                    role="tab"
-                    aria-selected={listTab === "untried"}
-                    onClick={() => setListTab("untried")}
-                    className={`px-3 py-2 text-[11px] font-semibold uppercase transition sm:text-xs ${
-                      listTab === "untried"
-                        ? "bg-mise-accent/10 text-mise-accent"
-                        : "text-mise-muted hover:text-mise-ink"
-                    }`}
-                  >
-                    To try ({untriedRecipes.length})
-                  </button>
+                  {[
+                    {
+                      id: "all" as const,
+                      label: "All",
+                      icon: LayoutGrid,
+                      count: recipes.length,
+                    },
+                    {
+                      id: "starred" as const,
+                      label: "Favorites",
+                      icon: Star,
+                      count: starredRecipes.length,
+                    },
+                    {
+                      id: "tried" as const,
+                      label: "Tried",
+                      icon: CheckCircle2,
+                      count: triedRecipes.length,
+                    },
+                    {
+                      id: "untried" as const,
+                      label: "To try",
+                      icon: Circle,
+                      count: untriedRecipes.length,
+                    },
+                  ].map((tab) => {
+                    const Icon = tab.icon;
+                    const selected = listTab === tab.id;
+                    return (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        role="tab"
+                        aria-selected={selected}
+                        onClick={() => setListTab(tab.id)}
+                        className={`inline-flex items-center gap-1.5 rounded-md border px-3 py-2 text-[11px] font-semibold uppercase transition sm:text-xs ${
+                          selected
+                            ? "border-mise-accent bg-mise-accent text-mise-page"
+                            : "border-mise-border bg-mise-surface text-mise-muted hover:border-mise-ink hover:text-mise-ink"
+                        }`}
+                        style={{ letterSpacing: "0.14em" }}
+                      >
+                        <Icon
+                          size={13}
+                          aria-hidden="true"
+                          className={
+                            selected
+                              ? "text-mise-page"
+                              : tab.id === "starred"
+                                ? "text-mise-accent"
+                                : "text-mise-muted"
+                          }
+                          fill={
+                            selected && tab.id === "starred"
+                              ? "currentColor"
+                              : tab.id === "starred"
+                                ? "currentColor"
+                                : "none"
+                          }
+                        />
+                        <span>{tab.label}</span>
+                        <span
+                          className={`ml-1 inline-flex h-5 min-w-5 items-center justify-center rounded-sm px-1 text-[10px] font-semibold tabular-nums ${
+                            selected
+                              ? "bg-mise-page/25 text-mise-page"
+                              : "bg-mise-surface-soft text-mise-muted"
+                          }`}
+                        >
+                          {tab.count}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
               ) : null}
-              <Link
-                href="/discover"
-                className="mise-btn-secondary text-sm"
-              >
-                <Search size={16} aria-hidden="true" />
-                Discover
-              </Link>
             </div>
           </div>
 

@@ -144,7 +144,7 @@ export function RecipeDetailClient({
           <RecipeImage
             src={recipe.image_url}
             title={recipe.title}
-            className="aspect-[21/9]"
+            className=""
             size="hero"
           />
           <div className="px-6 py-10 sm:px-12 sm:py-14">

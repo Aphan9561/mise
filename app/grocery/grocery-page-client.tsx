@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { UserButton } from "@clerk/nextjs";
 import {
-  Boxes,
   Check,
   Loader2,
   PackageCheck,
@@ -14,6 +13,7 @@ import {
   Trash2,
   Utensils,
 } from "lucide-react";
+import { SectionNav } from "@/app/components/section-nav";
 import {
   checkOffGroceryItemAction,
   createGroceryItemAction,
@@ -90,20 +90,8 @@ export function GroceryPageClient({
               </p>
             </div>
           </Link>
-          <div className="flex items-center gap-2">
-            <Link
-              href="/recipes"
-              className="mise-btn-secondary py-2 pl-3 pr-4 text-sm"
-            >
-              Cookbook
-            </Link>
-            <Link
-              href="/pantry"
-              className="mise-btn-secondary py-2 pl-3 pr-4 text-sm"
-            >
-              <Boxes size={16} aria-hidden="true" />
-              Pantry
-            </Link>
+          <div className="flex items-center gap-3">
+            <SectionNav />
             <UserButton />
           </div>
         </div>

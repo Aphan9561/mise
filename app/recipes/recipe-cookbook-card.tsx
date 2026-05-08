@@ -36,7 +36,7 @@ export function RecipeCookbookCard({ recipe }: Props) {
         <RecipeImage
           src={recipe.image_url}
           title={recipe.title}
-          className="aspect-[4/3]"
+          className=""
           size="card"
         />
         <hr className="mise-rule" />

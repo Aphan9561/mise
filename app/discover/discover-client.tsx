@@ -9,6 +9,7 @@ import {
   Search,
   X,
 } from "lucide-react";
+import { RecipeImage } from "@/app/recipes/recipe-image";
 import {
   fallbackDiscoveryRecipes,
   type DiscoveryRecipe,
@@ -52,7 +53,7 @@ function DiscoverSkeletonGrid({ count = 6 }: { count?: number }) {
       {Array.from({ length: count }).map((_, index) => (
         <div
           key={`sk-${index}`}
-          className="animate-pulse overflow-hidden rounded-2xl border border-mise-border bg-mise-surface"
+          className="animate-pulse overflow-hidden rounded-md border border-mise-border bg-mise-surface"
         >
           <div className="aspect-[4/3] bg-mise-border/45" />
           <div className="space-y-3 p-4">
@@ -84,82 +85,80 @@ export function DiscoverClient({
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
-  const runSearch = useCallback(async () => {
-    setIsSearching(true);
-    setFetchError(null);
-    try {
-      const response = await fetch(
-        buildDiscoveryApiUrl({ category, area, ingredient, query }),
-      );
-      const data = (await response.json()) as {
-        source?: string;
-        recipes?: DiscoveryRecipe[];
-        error?: string;
-      };
+  const runDiscoveryFetch = useCallback(
+    async (filters: {
+      category: string;
+      area: string;
+      ingredient: string;
+      query: string;
+    }) => {
+      setIsSearching(true);
+      setFetchError(null);
+      try {
+        const response = await fetch(buildDiscoveryApiUrl(filters));
+        const data = (await response.json()) as {
+          source?: string;
+          recipes?: DiscoveryRecipe[];
+          error?: string;
+        };
 
-      if (!response.ok) {
-        setFetchError(
-          data.error ?? `Search failed (${response.status}). Try again.`,
+        if (!response.ok) {
+          setFetchError(
+            data.error ?? `Search failed (${response.status}). Try again.`,
+          );
+          return;
+        }
+
+        setSource(data.source ?? "local");
+        setRecipes(
+          data.recipes && data.recipes.length > 0
+            ? data.recipes
+            : fallbackDiscoveryRecipes,
         );
-        return;
+      } catch {
+        setFetchError(
+          "We couldn’t reach Discover. Check your connection and try again.",
+        );
+      } finally {
+        setIsSearching(false);
       }
+    },
+    [],
+  );
 
-      setSource(data.source ?? "local");
-      setRecipes(
-        data.recipes && data.recipes.length > 0
-          ? data.recipes
-          : fallbackDiscoveryRecipes,
-      );
-    } catch {
-      setFetchError(
-        "We couldn’t reach Discover. Check your connection and try again.",
-      );
-    } finally {
-      setIsSearching(false);
-    }
-  }, [area, category, ingredient, query]);
+  const runSearch = useCallback(async () => {
+    await runDiscoveryFetch({ category, area, ingredient, query });
+  }, [area, category, ingredient, query, runDiscoveryFetch]);
 
   const resetAndSearch = useCallback(async () => {
     setCategory("");
     setArea("");
     setIngredient("");
     setQuery("");
-    setIsSearching(true);
-    setFetchError(null);
-    try {
-      const response = await fetch(
-        buildDiscoveryApiUrl({
-          category: "",
-          area: "",
-          ingredient: "",
-          query: "",
-        }),
-      );
-      const data = (await response.json()) as {
-        source?: string;
-        recipes?: DiscoveryRecipe[];
-        error?: string;
-      };
+    await runDiscoveryFetch({
+      category: "",
+      area: "",
+      ingredient: "",
+      query: "",
+    });
+  }, [runDiscoveryFetch]);
 
-      if (!response.ok) {
-        setFetchError(data.error ?? `Search failed (${response.status}).`);
-        return;
-      }
-
-      setSource(data.source ?? "local");
-      setRecipes(
-        data.recipes && data.recipes.length > 0
-          ? data.recipes
-          : fallbackDiscoveryRecipes,
-      );
-    } catch {
-      setFetchError(
-        "We couldn’t reach Discover. Check your connection and try again.",
-      );
-    } finally {
-      setIsSearching(false);
-    }
-  }, []);
+  const searchQuickQuery = useCallback(
+    async (nextQuery: string) => {
+      setCategory("");
+      setArea("");
+      setIngredient("");
+      const q = nextQuery.trim();
+      setQuery(q);
+      await runDiscoveryFetch({
+        category: "",
+        area: "",
+        ingredient: "",
+        query: q,
+      });
+    },
+    [runDiscoveryFetch],
+  );
 
   async function applyFilters(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -334,17 +333,26 @@ export function DiscoverClient({
 
           {fetchError ? (
             <section
-              className="mb-6 rounded-2xl border border-mise-danger-border bg-mise-danger-bg px-4 py-3 text-sm text-mise-danger"
+              className="mb-6 rounded-xl border border-mise-danger-border bg-mise-danger-bg px-4 py-3 text-sm text-mise-danger"
               role="alert"
             >
               <p>{fetchError}</p>
-              <button
-                type="button"
-                className="mt-3 mise-btn-secondary text-xs"
-                onClick={() => void runSearch()}
-              >
-                Try again
-              </button>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  className="mise-btn-secondary text-xs"
+                  onClick={() => void runSearch()}
+                >
+                  Try again
+                </button>
+                <button
+                  type="button"
+                  className="mise-btn-ghost border border-mise-border text-xs text-mise-ink"
+                  onClick={() => void resetAndSearch()}
+                >
+                  Clear filters & reset
+                </button>
+              </div>
             </section>
           ) : null}
 
@@ -352,8 +360,8 @@ export function DiscoverClient({
           {isSearching ? (
             <DiscoverSkeletonGrid />
           ) : recipes.length === 0 ? (
-            <div className="grid min-h-[280px] place-items-center rounded-2xl border border-dashed border-mise-border bg-mise-surface/60 p-10 text-center">
-              <div className="max-w-sm">
+            <div className="grid min-h-[280px] place-items-center rounded-xl border border-dashed border-mise-border bg-mise-surface/60 p-10 text-center">
+              <div className="max-w-md">
                 <Search
                   className="mx-auto text-mise-muted/50"
                   size={36}
@@ -363,57 +371,65 @@ export function DiscoverClient({
                   No recipes match
                 </h3>
                 <p className="mt-2 text-sm text-mise-muted">
-                  Widen your filters or pick a different dish name, then search
-                  again.
+                  Loosen filters or try a broader dish name below.
                 </p>
+                <div className="mt-6 flex flex-wrap justify-center gap-2">
+                  {["Chicken", "Pasta", "Beef", "Vegetarian"].map((hint) => (
+                    <button
+                      key={hint}
+                      type="button"
+                      className="mise-btn-secondary text-xs"
+                      onClick={() => void searchQuickQuery(hint)}
+                    >
+                      Try “{hint}”
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           ) : (
             <div className="grid gap-4 sm:grid-cols-2">
-            {recipes.map((recipe) => (
-              <Link
-                key={recipe.id}
-                href={`/discover/${encodeURIComponent(recipe.id)}`}
-                className="group overflow-hidden rounded-2xl border border-mise-border bg-mise-surface transition hover:-translate-y-0.5 hover:border-mise-accent/35 hover:shadow-[var(--shadow-mise-float)]"
-              >
-                <div
-                  className="aspect-[4/3] bg-[linear-gradient(145deg,#eef4ee_0%,#f4efe8_100%)] bg-cover bg-center"
-                  style={
-                    recipe.imageUrl
-                      ? { backgroundImage: `url(${recipe.imageUrl})` }
-                      : undefined
-                  }
-                  role={recipe.imageUrl ? "img" : undefined}
-                  aria-label={
-                    recipe.imageUrl
-                      ? `${recipe.title} — recipe photo`
-                      : undefined
-                  }
-                />
-                <div className="p-4">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-mise-accent">
-                    {recipe.cuisine}
-                  </p>
-                  <h3 className="mt-1 line-clamp-2 font-serif text-xl text-mise-ink transition group-hover:text-mise-accent">
-                    {recipe.title}
-                  </h3>
-                  {recipe.summary ? (
-                    <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-mise-muted">
-                      {recipe.summary}
-                    </p>
-                  ) : null}
-                  <div className="mt-3 flex items-center justify-between text-xs text-mise-muted">
-                    <span className="inline-flex items-center gap-1">
-                      <Clock3 size={14} aria-hidden="true" />
-                      ~{recipe.readyInMinutes} min
-                    </span>
-                    {recipe.ingredients.length > 0 ? (
-                      <span>{recipe.ingredients.length} ingredients</span>
+              {recipes.map((recipe) => (
+                <Link
+                  key={recipe.id}
+                  href={`/discover/${encodeURIComponent(recipe.id)}`}
+                  className="group overflow-hidden rounded-md border border-mise-border bg-mise-surface transition hover:border-mise-accent/60"
+                >
+                  <RecipeImage
+                    src={recipe.imageUrl}
+                    title={recipe.title}
+                    className=""
+                    size="card"
+                  />
+                  <hr className="mise-rule" />
+                  <div className="p-5">
+                    <p className="mise-eyebrow">{recipe.cuisine}</p>
+                    <h3 className="mt-2 line-clamp-2 font-serif text-xl font-medium tracking-tight text-mise-ink transition group-hover:text-mise-accent">
+                      {recipe.title}
+                    </h3>
+                    {recipe.summary ? (
+                      <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-mise-muted">
+                        {recipe.summary}
+                      </p>
                     ) : null}
+                    <hr className="mise-rule mt-4" />
+                    <div
+                      className="mt-3 flex items-center justify-between text-[11px] font-semibold uppercase text-mise-muted"
+                      style={{ letterSpacing: "0.16em" }}
+                    >
+                      <span className="inline-flex items-center gap-1.5">
+                        <Clock3 size={12} aria-hidden="true" />
+                        ~{recipe.readyInMinutes} min
+                      </span>
+                      {recipe.ingredients.length > 0 ? (
+                        <span>{recipe.ingredients.length} items</span>
+                      ) : (
+                        <span />
+                      )}
+                    </div>
                   </div>
-                </div>
-              </Link>
-            ))}
+                </Link>
+              ))}
             </div>
           )}
           </div>

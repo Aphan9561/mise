@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useLayoutEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import {
   Bot,
@@ -9,6 +9,8 @@ import {
   Loader2,
   PartyPopper,
   Send,
+  Square,
+  Volume2,
   X,
 } from "lucide-react";
 import {
@@ -26,6 +28,10 @@ type ChatMessage = {
   content: string;
 };
 
+function cookResumeStorageKey(recipeId: string) {
+  return `miseCookResume:v1:${recipeId}`;
+}
+
 export function CookModeClient({ recipe }: Props) {
   const steps = recipe.instructions;
   const totalSteps = steps.length;
@@ -38,6 +44,9 @@ export function CookModeClient({ recipe }: Props) {
     closeTechnique,
   } = useTechniqueHighlighter();
   const [stepIndex, setStepIndex] = useState(0);
+  const [resumeReady, setResumeReady] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const touchStartX = useRef<number | null>(null);
   const [isAssistantOpen, setIsAssistantOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
     {
@@ -48,10 +57,113 @@ export function CookModeClient({ recipe }: Props) {
   ]);
   const [question, setQuestion] = useState("");
   const [isChatLoading, setIsChatLoading] = useState(false);
+  const [speechReady, setSpeechReady] = useState(false);
 
   const isLastStep = stepIndex >= totalSteps - 1;
   const isFinished = totalSteps > 0 && stepIndex === totalSteps;
   const currentStep = stepIndex < totalSteps ? steps[stepIndex] : null;
+
+  useLayoutEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(cookResumeStorageKey(recipe.id));
+      const parsed =
+        typeof raw === "string" ? Number.parseInt(raw, 10) : Number.NaN;
+      if (
+        Number.isFinite(parsed) &&
+        parsed >= 0 &&
+        parsed <= totalSteps
+      ) {
+        setStepIndex(parsed);
+      }
+    } catch {
+      // ignore malformed storage
+    } finally {
+      setResumeReady(true);
+    }
+  }, [recipe.id, totalSteps]);
+
+  useEffect(() => {
+    setSpeechReady(
+      typeof window !== "undefined" &&
+        typeof window.speechSynthesis !== "undefined" &&
+        typeof SpeechSynthesisUtterance !== "undefined",
+    );
+  }, []);
+
+  useEffect(() => {
+    if (!resumeReady) {
+      return;
+    }
+    if (typeof window === "undefined") {
+      return;
+    }
+    try {
+      if (stepIndex >= 0 && stepIndex <= totalSteps) {
+        sessionStorage.setItem(
+          cookResumeStorageKey(recipe.id),
+          String(stepIndex),
+        );
+      }
+      if (isFinished) {
+        sessionStorage.removeItem(cookResumeStorageKey(recipe.id));
+      }
+    } catch {
+      // quota / privacy mode
+    }
+  }, [recipe.id, resumeReady, stepIndex, totalSteps, isFinished]);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.speechSynthesis) {
+      return;
+    }
+    return () => {
+      window.speechSynthesis.cancel();
+    };
+  }, []);
+
+  function stopSpeaking() {
+    if (typeof window !== "undefined" && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
+    setIsSpeaking(false);
+  }
+
+  function speakCurrentStep() {
+    if (typeof window === "undefined" || !window.speechSynthesis) {
+      return;
+    }
+    if (!currentStep) {
+      return;
+    }
+
+    stopSpeaking();
+
+    const text = `Step ${stepIndex + 1} of ${totalSteps}. ${currentStep}`;
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.rate = 0.95;
+
+    utterance.onstart = () => {
+      setIsSpeaking(true);
+    };
+    utterance.onend = () => {
+      setIsSpeaking(false);
+    };
+    utterance.onerror = () => {
+      setIsSpeaking(false);
+    };
+
+    window.speechSynthesis.speak(utterance);
+  }
+
+  useEffect(() => {
+    if (!resumeReady) {
+      return;
+    }
+    if (typeof window !== "undefined" && window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
+    setIsSpeaking(false);
+  }, [stepIndex, resumeReady]);
 
   useEffect(() => {
     if (typeof window === "undefined" || !("wakeLock" in navigator)) {
@@ -226,7 +338,7 @@ export function CookModeClient({ recipe }: Props) {
       <section className="mx-auto flex w-full max-w-3xl flex-1 flex-col px-4 py-8 sm:px-6 sm:py-12">
         {isFinished ? (
           <div className="flex flex-1 flex-col items-center justify-center text-center">
-            <div className="grid size-16 place-items-center rounded-3xl bg-mise-forest text-white shadow-sm">
+            <div className="grid size-16 place-items-center rounded-xl bg-mise-accent text-mise-page shadow-sm">
               <PartyPopper size={28} aria-hidden="true" />
             </div>
             <h2 className="mt-6 font-serif text-4xl text-mise-ink">
@@ -252,10 +364,36 @@ export function CookModeClient({ recipe }: Props) {
             </div>
           </div>
         ) : (
-          <div className="flex flex-1 flex-col">
+          <div
+            className="flex flex-1 flex-col touch-pan-y"
+            role="region"
+            aria-label="Swipe left for next step, swipe right for previous"
+            onTouchStart={(event) => {
+              touchStartX.current = event.changedTouches[0]?.clientX ?? null;
+            }}
+            onTouchEnd={(event) => {
+              const start = touchStartX.current;
+              touchStartX.current = null;
+              const touch = event.changedTouches[0];
+              if (typeof start !== "number" || !touch) {
+                return;
+              }
+              const end = touch.clientX;
+              const delta = end - start;
+              const threshold = 56;
+              if (delta < -threshold) {
+                setStepIndex((index) => Math.min(index + 1, totalSteps));
+              } else if (delta > threshold) {
+                setStepIndex((index) => Math.max(index - 1, 0));
+              }
+            }}
+          >
             <div className="flex flex-1 flex-col justify-center">
               <p className="font-serif text-3xl leading-snug tracking-tight text-mise-ink sm:text-4xl sm:leading-snug md:text-[2.75rem] md:leading-[1.2]">
                 {renderStepText(currentStep ?? "")}
+              </p>
+              <p className="sr-only">
+                Tap Listen to hear this step read aloud.
               </p>
             </div>
           </div>
@@ -270,7 +408,37 @@ export function CookModeClient({ recipe }: Props) {
       />
 
       <footer className="sticky bottom-0 z-10 border-t border-mise-border bg-mise-surface/95 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur-md">
-        <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-4 py-4 sm:px-6">
+        <div className="mx-auto max-w-3xl space-y-3 px-4 py-4 sm:px-6">
+          {!isFinished ? (
+            <div className="flex flex-wrap justify-center gap-2 sm:justify-end">
+              {speechReady ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={speakCurrentStep}
+                    disabled={!currentStep}
+                    className="mise-btn-secondary text-xs sm:text-sm"
+                  >
+                    <Volume2 size={16} aria-hidden="true" />
+                    Listen to step
+                  </button>
+                  <button
+                    type="button"
+                    onClick={stopSpeaking}
+                    disabled={!isSpeaking}
+                    className="mise-btn-ghost text-xs sm:text-sm"
+                  >
+                    <Square size={14} aria-hidden="true" />
+                    Stop
+                  </button>
+                </>
+              ) : null}
+              <span className="hidden text-xs text-mise-muted sm:inline sm:self-center">
+                Swipe ← → between steps on your phone.
+              </span>
+            </div>
+          ) : null}
+          <div className="flex items-center justify-between gap-3">
           <button
             type="button"
             onClick={() => setStepIndex((index) => Math.max(index - 1, 0))}
@@ -296,6 +464,7 @@ export function CookModeClient({ recipe }: Props) {
               <ChevronRight size={18} aria-hidden="true" />
             </button>
           )}
+          </div>
         </div>
       </footer>
 

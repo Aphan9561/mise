@@ -20,19 +20,26 @@ export function RecipeMonogram({ title, className = "", size = "card" }: Props) 
       ? "text-[clamp(6rem,18vw,12rem)]"
       : "text-7xl";
 
+  /** Inline aspect ratio avoids Tailwind arbitrary `aspect-[4/3]` slash parsing issues (v4). */
+  const frameStyle =
+    size === "hero"
+      ? ({ aspectRatio: "21 / 9", width: "100%" } as const)
+      : ({ aspectRatio: "4 / 3", width: "100%" } as const);
+
   return (
     <div
-      className={`relative grid place-items-center bg-mise-accent/10 ${className}`}
+      className={`relative grid w-full shrink-0 place-items-center bg-mise-accent/10 ${className}`}
+      style={frameStyle}
       role="img"
       aria-label={`${title} — placeholder image`}
     >
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-3 border border-mise-accent/25"
+        className="pointer-events-none absolute inset-3 z-0 border border-mise-accent/25"
       />
       <span
         aria-hidden="true"
-        className={`font-serif font-medium leading-none tracking-tight text-mise-accent ${letterSize}`}
+        className={`relative z-[1] font-serif font-medium leading-none tracking-tight text-mise-accent ${letterSize}`}
       >
         {letter}
       </span>
