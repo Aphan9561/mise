@@ -52,7 +52,7 @@ export default function Home() {
           <div className="flex flex-wrap items-center gap-3">
             <Show when="signed-out">
               <SignInButton mode="redirect">
-                <button className="mise-btn-secondary rounded-full px-5">
+                <button className="mise-btn-secondary px-5">
                   Sign in
                 </button>
               </SignInButton>
@@ -65,7 +65,7 @@ export default function Home() {
             <Show when="signed-in">
               <Link
                 href="/recipes"
-                className="mise-btn-secondary rounded-full px-5"
+                className="mise-btn-secondary px-5"
               >
                 My recipes
               </Link>
@@ -105,7 +105,7 @@ export default function Home() {
               </Show>
               <Link
                 href="#stack"
-                className="mise-btn-secondary rounded-full px-8 py-3"
+                className="mise-btn-secondary px-8 py-3"
               >
                 Explore the stack
               </Link>

@@ -197,36 +197,36 @@ export function RecipesPageClient({
       <header className="mise-header">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-5 sm:px-6 lg:px-8">
           <Link href="/recipes" className="flex min-w-0 items-center gap-3">
-            <div className="grid size-11 place-items-center rounded-2xl bg-mise-forest text-white shadow-sm">
-              <Utensils size={20} aria-hidden="true" />
+            <div className="grid size-11 place-items-center rounded-md bg-mise-accent text-mise-page">
+              <Utensils size={18} aria-hidden="true" />
             </div>
             <div className="min-w-0">
-              <h1 className="truncate font-serif text-xl text-mise-ink sm:text-2xl">
+              <h1 className="truncate font-serif text-2xl tracking-tight text-mise-ink sm:text-3xl">
                 Mise
               </h1>
-              <p className="truncate text-xs text-mise-muted sm:text-sm">
-                {primaryEmail ?? "Signed in"}
+              <p className="truncate text-[10px] font-semibold uppercase text-mise-muted" style={{ letterSpacing: "0.2em" }}>
+                Cookbook · {primaryEmail ?? "Signed in"}
               </p>
             </div>
           </Link>
           <div className="flex items-center gap-2">
             <Link
               href="/pantry"
-              className="mise-btn-secondary rounded-full py-2 pl-3 pr-4 text-sm"
+              className="mise-btn-secondary py-2 pl-3 pr-4 text-sm"
             >
               <Boxes size={16} aria-hidden="true" />
               Pantry
             </Link>
             <Link
               href="/grocery"
-              className="mise-btn-secondary rounded-full py-2 pl-3 pr-4 text-sm"
+              className="mise-btn-secondary py-2 pl-3 pr-4 text-sm"
             >
               <ShoppingBasket size={16} aria-hidden="true" />
               Grocery
             </Link>
             <Link
               href="/discover"
-              className="mise-btn-secondary rounded-full py-2 pl-3 pr-4 text-sm"
+              className="mise-btn-secondary py-2 pl-3 pr-4 text-sm"
             >
               <Compass size={16} aria-hidden="true" />
               Discover
@@ -434,7 +434,7 @@ export function RecipesPageClient({
                   onClick={() => setFiltersOpen((o) => !o)}
                   aria-expanded={filtersOpen}
                   aria-controls="cookbook-filters"
-                  className={`mise-btn-secondary rounded-full py-2 pl-3 pr-3 text-sm ${
+                  className={`mise-btn-secondary py-2 pl-3 pr-3 text-sm ${
                     activeFilterCount > 0
                       ? "border-mise-accent/40 bg-mise-chip text-mise-chip-text"
                       : ""
@@ -453,16 +453,16 @@ export function RecipesPageClient({
                 <div
                   role="tablist"
                   aria-label="Filter recipes"
-                  className="flex rounded-full border border-mise-border bg-mise-surface-soft p-1"
+                  className="flex divide-x divide-mise-border rounded-md border border-mise-border bg-mise-surface"
                 >
                   <button
                     type="button"
                     role="tab"
                     aria-selected={listTab === "all"}
                     onClick={() => setListTab("all")}
-                    className={`rounded-full px-3 py-2 text-xs font-semibold transition sm:text-sm ${
+                    className={`px-3 py-2 text-[11px] font-semibold uppercase transition sm:text-xs ${
                       listTab === "all"
-                        ? "bg-mise-forest text-white"
+                        ? "bg-mise-accent/10 text-mise-accent"
                         : "text-mise-muted hover:text-mise-ink"
                     }`}
                   >
@@ -473,9 +473,9 @@ export function RecipesPageClient({
                     role="tab"
                     aria-selected={listTab === "starred"}
                     onClick={() => setListTab("starred")}
-                    className={`rounded-full px-3 py-2 text-xs font-semibold transition sm:text-sm ${
+                    className={`px-3 py-2 text-[11px] font-semibold uppercase transition sm:text-xs ${
                       listTab === "starred"
-                        ? "bg-mise-forest text-white"
+                        ? "bg-mise-accent/10 text-mise-accent"
                         : "text-mise-muted hover:text-mise-ink"
                     }`}
                   >
@@ -486,9 +486,9 @@ export function RecipesPageClient({
                     role="tab"
                     aria-selected={listTab === "tried"}
                     onClick={() => setListTab("tried")}
-                    className={`rounded-full px-3 py-2 text-xs font-semibold transition sm:text-sm ${
+                    className={`px-3 py-2 text-[11px] font-semibold uppercase transition sm:text-xs ${
                       listTab === "tried"
-                        ? "bg-mise-forest text-white"
+                        ? "bg-mise-accent/10 text-mise-accent"
                         : "text-mise-muted hover:text-mise-ink"
                     }`}
                   >
@@ -499,9 +499,9 @@ export function RecipesPageClient({
                     role="tab"
                     aria-selected={listTab === "untried"}
                     onClick={() => setListTab("untried")}
-                    className={`rounded-full px-3 py-2 text-xs font-semibold transition sm:text-sm ${
+                    className={`px-3 py-2 text-[11px] font-semibold uppercase transition sm:text-xs ${
                       listTab === "untried"
-                        ? "bg-mise-forest text-white"
+                        ? "bg-mise-accent/10 text-mise-accent"
                         : "text-mise-muted hover:text-mise-ink"
                     }`}
                   >
@@ -511,7 +511,7 @@ export function RecipesPageClient({
               ) : null}
               <Link
                 href="/discover"
-                className="inline-flex min-h-11 items-center gap-2 rounded-full bg-mise-chip px-4 py-2 text-sm font-semibold text-mise-chip-text transition hover:opacity-90"
+                className="mise-btn-secondary text-sm"
               >
                 <Search size={16} aria-hidden="true" />
                 Discover

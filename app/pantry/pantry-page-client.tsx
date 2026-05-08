@@ -128,28 +128,28 @@ export function PantryPageClient({
       <header className="mise-header">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-5 sm:px-6 lg:px-8">
           <Link href="/recipes" className="flex min-w-0 items-center gap-3">
-            <div className="grid size-11 place-items-center rounded-2xl bg-mise-forest text-white shadow-sm">
-              <Utensils size={20} aria-hidden="true" />
+            <div className="grid size-11 place-items-center rounded-md bg-mise-accent text-mise-page">
+              <Utensils size={18} aria-hidden="true" />
             </div>
             <div className="min-w-0">
-              <h1 className="truncate font-serif text-xl text-mise-ink sm:text-2xl">
+              <h1 className="truncate font-serif text-2xl tracking-tight text-mise-ink sm:text-3xl">
                 Pantry
               </h1>
-              <p className="truncate text-xs text-mise-muted sm:text-sm">
-                {primaryEmail ?? "Signed in"}
+              <p className="truncate text-[10px] font-semibold uppercase text-mise-muted" style={{ letterSpacing: "0.2em" }}>
+                Inventory · {primaryEmail ?? "Signed in"}
               </p>
             </div>
           </Link>
           <div className="flex items-center gap-2">
             <Link
               href="/recipes"
-              className="mise-btn-secondary rounded-full py-2 pl-3 pr-4 text-sm"
+              className="mise-btn-secondary py-2 pl-3 pr-4 text-sm"
             >
               Cookbook
             </Link>
             <Link
               href="/grocery"
-              className="mise-btn-secondary rounded-full py-2 pl-3 pr-4 text-sm"
+              className="mise-btn-secondary py-2 pl-3 pr-4 text-sm"
             >
               <ShoppingBasket size={16} aria-hidden="true" />
               Grocery

@@ -3,6 +3,7 @@
 import { Clock3, ExternalLink, Video } from "lucide-react";
 import { AddDiscoveryRecipeButton } from "@/app/discover/add-discovery-recipe-button";
 import { PantryCoverageBanner } from "@/app/recipes/pantry-coverage-banner";
+import { RecipeImage } from "@/app/recipes/recipe-image";
 import {
   TechniquePopover,
   useTechniqueHighlighter,
@@ -31,14 +32,12 @@ export function DiscoverRecipeDetail({ recipe, pantryCoverage }: Props) {
     <>
       <div className="mx-auto max-w-5xl px-4 pb-16 pt-6 sm:px-6 lg:px-8">
         <article className="mise-card overflow-hidden rounded-3xl">
-          {recipe.imageUrl ? (
-            <div
-              className="aspect-[21/9] bg-cover bg-center"
-              style={{ backgroundImage: `url(${recipe.imageUrl})` }}
-              role="img"
-              aria-label={recipe.title}
-            />
-          ) : null}
+          <RecipeImage
+            src={recipe.imageUrl}
+            title={recipe.title}
+            className="aspect-[21/9]"
+            size="hero"
+          />
           <div className="px-6 py-8 sm:px-10 sm:py-12">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-mise-accent">
               {recipe.category

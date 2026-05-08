@@ -43,7 +43,7 @@ export function RecipeStarButton({
       disabled={pending}
       aria-pressed={shownStarred}
       title={shownStarred ? "Remove from favorites" : "Add to favorites"}
-      className={`inline-flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-xl border border-mise-border bg-mise-surface px-3 py-2 text-sm font-medium text-mise-ink transition hover:border-mise-accent/40 hover:bg-mise-chip disabled:opacity-50 ${className}`}
+      className={`inline-flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-md border border-mise-border bg-mise-surface px-3 py-2 text-sm font-medium text-mise-ink transition hover:border-mise-accent hover:bg-mise-accent/5 disabled:opacity-50 ${className}`}
     >
       {pending ? (
         <Loader2 className="animate-spin" size={16} aria-hidden="true" />
@@ -53,7 +53,7 @@ export function RecipeStarButton({
           aria-hidden="true"
           className={
             shownStarred
-              ? "fill-mise-warm text-mise-warm"
+              ? "fill-mise-accent text-mise-accent"
               : "text-mise-muted"
           }
         />

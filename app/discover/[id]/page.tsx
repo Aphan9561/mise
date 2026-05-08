@@ -43,19 +43,19 @@ export default async function DiscoverRecipePage({ params }: Props) {
           <div className="flex items-center gap-2">
             <Link
               href="/pantry"
-              className="mise-btn-secondary rounded-full py-2 pl-3 pr-4 text-sm"
+              className="mise-btn-secondary py-2 pl-3 pr-4 text-sm"
             >
               Pantry
             </Link>
             <Link
               href="/grocery"
-              className="mise-btn-secondary rounded-full py-2 pl-3 pr-4 text-sm"
+              className="mise-btn-secondary py-2 pl-3 pr-4 text-sm"
             >
               Grocery
             </Link>
             <Link
               href="/recipes"
-              className="inline-flex items-center gap-2 rounded-full bg-mise-chip px-4 py-2 text-sm font-semibold text-mise-chip-text"
+              className="mise-btn-secondary text-sm"
             >
               My recipes
             </Link>

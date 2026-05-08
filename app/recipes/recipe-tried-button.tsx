@@ -47,10 +47,10 @@ export function RecipeTriedButton({
           ? "You marked this as tried — click to undo"
           : "Mark this recipe as tried"
       }
-      className={`inline-flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium transition disabled:opacity-50 ${
+      className={`inline-flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-md border px-3 py-2 text-sm font-medium transition disabled:opacity-50 ${
         shownTried
-          ? "border-mise-accent/50 bg-mise-accent/10 text-mise-accent hover:bg-mise-accent/15"
-          : "border-mise-border bg-mise-surface text-mise-ink hover:border-mise-accent/40 hover:bg-mise-chip"
+          ? "border-mise-accent bg-mise-accent/10 text-mise-accent"
+          : "border-mise-border bg-transparent text-mise-ink hover:border-mise-ink hover:bg-mise-surface"
       } ${className}`}
     >
       {pending ? (

@@ -27,6 +27,7 @@ import {
 } from "@/app/recipes/actions";
 import { AddToGrocery } from "@/app/recipes/[id]/add-to-grocery";
 import { PantryCoverageBanner } from "@/app/recipes/pantry-coverage-banner";
+import { RecipeImage } from "@/app/recipes/recipe-image";
 import { RecipeStarButton } from "@/app/recipes/recipe-star-button";
 import { RecipeTriedButton } from "@/app/recipes/recipe-tried-button";
 import {
@@ -139,25 +140,28 @@ export function RecipeDetailClient({
   return (
     <>
       <div className="mx-auto max-w-5xl px-4 pb-16 pt-6 sm:px-6 lg:px-8">
-        <article className="mise-card overflow-hidden rounded-3xl">
-          {recipe.image_url ? (
-            <div
-              className="aspect-[21/9] bg-cover bg-center"
-              style={{ backgroundImage: `url(${recipe.image_url})` }}
-              role="img"
-              aria-label={recipe.title}
-            />
-          ) : (
-            <div
-              className="mise-wood-grain h-3"
-              aria-hidden="true"
-            />
-          )}
-          <div className="px-6 py-8 sm:px-10 sm:py-12">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-mise-accent">
-              {recipe.cuisine ?? recipe.source}
-            </p>
-            <h1 className="mt-3 font-serif text-4xl leading-[1.05] tracking-tight text-mise-ink sm:text-5xl lg:text-6xl">
+        <article className="mise-card overflow-hidden">
+          <RecipeImage
+            src={recipe.image_url}
+            title={recipe.title}
+            className="aspect-[21/9]"
+            size="hero"
+          />
+          <div className="px-6 py-10 sm:px-12 sm:py-14">
+            <div className="flex items-center gap-3">
+              <span className="mise-eyebrow">
+                {recipe.cuisine ?? recipe.source}
+              </span>
+              {recipe.has_tried ? (
+                <span
+                  className="inline-flex items-center gap-1 rounded-sm border border-mise-accent px-1.5 py-0.5 text-[10px] font-semibold uppercase text-mise-accent"
+                  style={{ letterSpacing: "0.18em" }}
+                >
+                  Tried
+                </span>
+              ) : null}
+            </div>
+            <h1 className="mt-4 font-serif text-4xl font-medium leading-[1.05] tracking-tight text-mise-ink sm:text-5xl lg:text-6xl">
               {recipe.title}
             </h1>
             {recipe.description ? (
@@ -197,10 +201,12 @@ export function RecipeDetailClient({
               ) : null}
             </div>
 
-            <div className="mt-7 flex flex-wrap items-center gap-2 print:hidden">
+            <hr className="mise-rule mt-8" />
+
+            <div className="mt-6 flex flex-wrap items-center gap-2 print:hidden">
               <Link
                 href={`/recipes/${recipe.id}/cook`}
-                className="mise-btn-primary min-h-11 rounded-xl px-4 py-2.5 text-sm"
+                className="mise-btn-primary min-h-11 px-4 py-2.5 text-sm"
               >
                 <ChefHat size={16} aria-hidden="true" />
                 Cook
@@ -218,7 +224,7 @@ export function RecipeDetailClient({
                     window.print();
                   }
                 }}
-                className="mise-btn-secondary min-h-11 rounded-xl px-4 py-2.5 text-sm print:hidden"
+                className="mise-btn-secondary min-h-11 px-4 py-2.5 text-sm print:hidden"
                 title="Print this recipe"
               >
                 <Printer size={16} aria-hidden="true" />
@@ -227,7 +233,7 @@ export function RecipeDetailClient({
               <button
                 type="button"
                 onClick={() => setIsEditing((current) => !current)}
-                className="mise-btn-secondary min-h-11 rounded-xl px-4 py-2.5 text-sm print:hidden"
+                className="mise-btn-secondary min-h-11 px-4 py-2.5 text-sm print:hidden"
               >
                 {isEditing ? (
                   <X size={16} aria-hidden="true" />
@@ -377,38 +383,52 @@ export function RecipeDetailClient({
         ) : null}
 
         <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.4fr)]">
-          <section className="mise-card overflow-hidden rounded-2xl lg:sticky lg:top-24 lg:self-start">
+          <section className="mise-card overflow-hidden lg:sticky lg:top-24 lg:self-start">
             <div className="border-b border-mise-border px-6 py-5">
-              <h2 className="font-serif text-xl text-mise-ink">Ingredients</h2>
-              <p className="mt-1 text-xs text-mise-muted">
-                {recipe.ingredients.length}{" "}
+              <p className="mise-eyebrow">
+                Ingredients · {recipe.ingredients.length}{" "}
                 {recipe.ingredients.length === 1 ? "item" : "items"}
               </p>
+              <h2 className="mt-2 font-serif text-2xl tracking-tight text-mise-ink">
+                What you need
+              </h2>
             </div>
             <ul className="divide-y divide-mise-border/60">
               {recipe.ingredients.map((ingredient, index) => (
                 <li
                   key={`${ingredient}-${index}`}
-                  className="px-6 py-3 text-sm leading-relaxed text-mise-ink"
+                  className="flex gap-4 px-6 py-3 text-sm leading-relaxed text-mise-ink"
                 >
-                  {ingredient}
+                  <span className="mt-0.5 w-6 shrink-0 text-right font-serif text-xs tabular-nums text-mise-accent">
+                    {index + 1}
+                  </span>
+                  <span className="min-w-0">{ingredient}</span>
                 </li>
               ))}
             </ul>
           </section>
 
-          <section className="mise-card overflow-hidden rounded-2xl">
+          <section className="mise-card overflow-hidden">
             <div className="border-b border-mise-border px-6 py-5">
-              <h2 className="font-serif text-xl text-mise-ink">Steps</h2>
+              <p className="mise-eyebrow">
+                Method · {recipe.instructions.length}{" "}
+                {recipe.instructions.length === 1 ? "step" : "steps"}
+              </p>
+              <h2 className="mt-2 font-serif text-2xl tracking-tight text-mise-ink">
+                How to cook it
+              </h2>
               <p className="mt-1 text-xs text-mise-muted">
                 Tap a highlighted term for a quick technique note.
               </p>
             </div>
-            <ol className="space-y-6 p-6 sm:p-8">
+            <ol className="divide-y divide-mise-border/60">
               {recipe.instructions.map((step, index) => (
-                <li key={`${step}-${index}`} className="flex gap-4">
-                  <span className="mt-0.5 grid size-9 shrink-0 place-items-center rounded-xl bg-mise-forest text-sm font-semibold text-white">
-                    {index + 1}
+                <li
+                  key={`${step}-${index}`}
+                  className="flex gap-6 px-6 py-6 sm:px-8"
+                >
+                  <span className="w-10 shrink-0 font-serif text-3xl font-medium leading-none text-mise-accent tabular-nums">
+                    {String(index + 1).padStart(2, "0")}
                   </span>
                   <p className="min-w-0 text-base leading-7 text-mise-ink">
                     {renderStepText(step)}
@@ -459,7 +479,7 @@ export function RecipeDetailClient({
               <button
                 type="submit"
                 disabled={!deleteConfirmed}
-                className="inline-flex items-center gap-2 rounded-xl border border-mise-danger-border bg-mise-surface px-4 py-2.5 text-sm font-semibold text-mise-danger hover:bg-mise-danger-bg disabled:cursor-not-allowed disabled:border-mise-border disabled:text-mise-muted"
+                className="inline-flex items-center gap-2 rounded-md border border-mise-danger-border bg-mise-surface px-4 py-2.5 text-sm font-semibold text-mise-danger hover:bg-mise-danger-bg disabled:cursor-not-allowed disabled:border-mise-border disabled:text-mise-muted"
               >
                 Delete recipe
               </button>
@@ -519,7 +539,7 @@ export function RecipeDetailClient({
                 </p>
               ))}
               {isChatLoading ? (
-                <p className="inline-flex items-center gap-2 rounded-xl bg-mise-chat-assistant px-3 py-2 text-sm text-mise-muted">
+                <p className="inline-flex items-center gap-2 rounded-md bg-mise-chat-assistant px-3 py-2 text-sm text-mise-muted">
                   <Loader2 className="animate-spin" size={14} aria-hidden="true" />
                   Thinking
                 </p>
@@ -538,7 +558,7 @@ export function RecipeDetailClient({
               <button
                 type="submit"
                 disabled={isChatLoading}
-                className="grid size-11 shrink-0 place-items-center rounded-xl bg-mise-accent text-white hover:bg-mise-accent-hover disabled:opacity-45"
+                className="grid size-11 shrink-0 place-items-center rounded-md bg-mise-accent text-white hover:bg-mise-accent-hover disabled:opacity-45"
                 title="Send question"
               >
                 <Send size={16} aria-hidden="true" />

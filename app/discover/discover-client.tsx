@@ -305,7 +305,7 @@ export function DiscoverClient({
             <button
               type="button"
               onClick={() => setFiltersOpen((o) => !o)}
-              className="mise-btn-secondary rounded-full py-2 pl-4 pr-4"
+              className="mise-btn-secondary py-2 pl-4 pr-4"
             >
               <Filter size={16} className="text-mise-accent" aria-hidden="true" />
               {filtersOpen ? "Close" : "Filters"}

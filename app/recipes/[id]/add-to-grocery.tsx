@@ -78,7 +78,7 @@ export function AddToGrocery({ recipeId }: Props) {
       <button
         type="button"
         onClick={openModal}
-        className="mise-btn-secondary rounded-xl py-2 pl-3 pr-3 text-xs sm:text-sm"
+        className="mise-btn-secondary py-2 pl-3 pr-3 text-xs sm:text-sm"
       >
         <ShoppingBasket size={16} aria-hidden="true" />
         Add to grocery list
@@ -161,7 +161,7 @@ export function AddToGrocery({ recipeId }: Props) {
                       return (
                         <li
                           key={`${match.raw}-${index}`}
-                          className={`flex items-start gap-3 rounded-xl border px-3 py-2 text-sm ${
+                          className={`flex items-start gap-3 border px-3 py-2 text-sm ${
                             isSkipped
                               ? "border-mise-border/60 bg-mise-surface-soft text-mise-muted"
                               : "border-mise-border bg-mise-surface text-mise-ink"
