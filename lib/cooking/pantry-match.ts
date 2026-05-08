@@ -17,6 +17,8 @@ const COMMON_UNITS = new Set([
   "tbsps",
   "tbs",
   "tbls",
+  "tblsp",
+  "tblsps",
   "dsp",
   "tablespoon",
   "tablespoons",
@@ -200,6 +202,8 @@ const GLUED_SUFFIXES = new Set([
   "tbsp",
   "tbsps",
   "tbls",
+  "tblsp",
+  "tblsps",
   "tbs",
   "dsp",
   "cup",
@@ -236,7 +240,7 @@ function stripRepeatedLeadingMeasures(value: string): string {
   );
 
   const spacedMeasures = new RegExp(
-    `^(${QTY_RE})(?:\\s*-\\s*(${QTY_RE}))?\\s+(?:cups?|tablespoons?|teaspoons?|tsps|tbsps?|tbls|tbs|ts|grams?|ounces?|pounds?|kilograms?|millilitres?|milliliters?|litres?|liters?|stalks?)\\b\\.?`,
+    `^(${QTY_RE})(?:\\s*-\\s*(${QTY_RE}))?\\s+(?:cups?|tablespoons?|teaspoons?|tsps|tbls(?:p(?:s)?)?|tbsps?|tbs|ts|grams?|ounces?|pounds?|kilograms?|millilitres?|milliliters?|litres?|liters?|stalks?)\\b\\.?`,
     "i",
   );
 
