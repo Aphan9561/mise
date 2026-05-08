@@ -25,14 +25,18 @@ import {
   type RecipeActionState,
 } from "@/app/recipes/actions";
 import { AddToGrocery } from "@/app/recipes/[id]/add-to-grocery";
+import { PantryCoverageBanner } from "@/app/recipes/pantry-coverage-banner";
+import { RecipeStarButton } from "@/app/recipes/recipe-star-button";
 import {
   TechniquePopover,
   useTechniqueHighlighter,
 } from "@/app/recipes/[id]/technique-highlighter";
+import type { PantryCoverageSummary } from "@/lib/cooking/pantry-match";
 import type { UserRecipe } from "@/lib/supabase/recipes";
 
 type RecipeDetailClientProps = {
   recipe: UserRecipe;
+  pantryCoverage: PantryCoverageSummary;
 };
 
 type ChatMessage = {
@@ -45,7 +49,10 @@ const initialEditState: RecipeActionState = {
   message: "",
 };
 
-export function RecipeDetailClient({ recipe }: RecipeDetailClientProps) {
+export function RecipeDetailClient({
+  recipe,
+  pantryCoverage,
+}: RecipeDetailClientProps) {
   const router = useRouter();
   const {
     technique,
@@ -186,16 +193,17 @@ export function RecipeDetailClient({ recipe }: RecipeDetailClientProps) {
             <div className="mt-7 flex flex-wrap items-center gap-2">
               <Link
                 href={`/recipes/${recipe.id}/cook`}
-                className="mise-btn-primary rounded-xl px-4 py-2.5 text-sm"
+                className="mise-btn-primary min-h-11 rounded-xl px-4 py-2.5 text-sm"
               >
                 <ChefHat size={16} aria-hidden="true" />
                 Cook
               </Link>
               <AddToGrocery recipeId={recipe.id} />
+              <RecipeStarButton recipeId={recipe.id} isStarred={recipe.is_starred} />
               <button
                 type="button"
                 onClick={() => setIsEditing((current) => !current)}
-                className="mise-btn-secondary rounded-xl px-4 py-2.5 text-sm"
+                className="mise-btn-secondary min-h-11 rounded-xl px-4 py-2.5 text-sm"
               >
                 {isEditing ? (
                   <X size={16} aria-hidden="true" />
@@ -207,6 +215,32 @@ export function RecipeDetailClient({ recipe }: RecipeDetailClientProps) {
             </div>
           </div>
         </article>
+
+        <div className="mt-6 space-y-4">
+          <PantryCoverageBanner summary={pantryCoverage} />
+          {(recipe.ingredients.length === 0 ||
+            recipe.instructions.length === 0) && (
+            <section className="rounded-2xl border border-mise-warm/35 bg-mise-warn-bg px-5 py-4 text-sm text-mise-warn-text">
+              {recipe.ingredients.length === 0 &&
+              recipe.instructions.length === 0 ? (
+                <p>
+                  This recipe is missing both ingredients and instructions.
+                  Open Edit to fill them in.
+                </p>
+              ) : recipe.ingredients.length === 0 ? (
+                <p>
+                  This recipe has no ingredients saved yet — add lines in Edit
+                  so grocery previews and pantry match work.
+                </p>
+              ) : (
+                <p>
+                  No steps saved yet — add instructions in Edit to use cook
+                  mode and technique hints.
+                </p>
+              )}
+            </section>
+          )}
+        </div>
 
         {isEditing ? (
           <section className="mise-card mt-6 overflow-hidden rounded-2xl">
@@ -420,14 +454,14 @@ export function RecipeDetailClient({ recipe }: RecipeDetailClientProps) {
       <button
         type="button"
         onClick={() => setIsAssistantOpen((current) => !current)}
-        className="fixed bottom-6 right-6 z-30 mise-btn-primary rounded-full px-5 py-3 shadow-[var(--shadow-mise-float)]"
+        className="fixed bottom-[max(1.25rem,calc(env(safe-area-inset-bottom)+1rem))] right-[max(1.25rem,calc(env(safe-area-inset-right)+1rem))] z-30 mise-btn-primary rounded-full px-5 py-3 shadow-[var(--shadow-mise-float)]"
       >
         <Bot size={17} aria-hidden="true" />
         Ask Mise
       </button>
 
       {isAssistantOpen ? (
-        <aside className="fixed inset-x-4 bottom-24 z-30 mise-card max-h-[min(70vh,440px)] overflow-hidden rounded-2xl sm:left-auto sm:right-6 sm:w-[400px]">
+        <aside className="fixed inset-x-[max(0.75rem,calc(env(safe-area-inset-left)+1px))] bottom-[max(6rem,calc(env(safe-area-inset-bottom)+6rem))] z-30 mise-card max-h-[min(70vh,440px)] overflow-hidden rounded-2xl sm:inset-x-auto sm:right-[max(1rem,calc(env(safe-area-inset-right)+0.75rem))] sm:w-[400px]">
           <div className="flex items-center justify-between border-b border-mise-border px-4 py-3">
             <div className="flex items-center gap-2">
               <Bot size={17} className="text-mise-accent" aria-hidden="true" />
@@ -442,7 +476,12 @@ export function RecipeDetailClient({ recipe }: RecipeDetailClientProps) {
             </button>
           </div>
           <div className="flex max-h-[340px] flex-col">
-            <div className="flex-1 space-y-3 overflow-y-auto p-4">
+            <div
+              className="flex-1 space-y-3 overflow-y-auto p-4"
+              aria-live="polite"
+              aria-relevant="additions text"
+              aria-busy={isChatLoading}
+            >
               {chatMessages.map((message, index) => (
                 <p
                   key={`${message.role}-${index}`}

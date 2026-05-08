@@ -2,17 +2,20 @@
 
 import { Clock3, ExternalLink, Video } from "lucide-react";
 import { AddDiscoveryRecipeButton } from "@/app/discover/add-discovery-recipe-button";
+import { PantryCoverageBanner } from "@/app/recipes/pantry-coverage-banner";
 import {
   TechniquePopover,
   useTechniqueHighlighter,
 } from "@/app/recipes/[id]/technique-highlighter";
 import type { DiscoveryRecipeDetail } from "@/lib/cooking/discovery";
+import type { PantryCoverageSummary } from "@/lib/cooking/pantry-match";
 
 type Props = {
   recipe: DiscoveryRecipeDetail;
+  pantryCoverage: PantryCoverageSummary;
 };
 
-export function DiscoverRecipeDetail({ recipe }: Props) {
+export function DiscoverRecipeDetail({ recipe, pantryCoverage }: Props) {
   const {
     technique,
     isLoading: isTechniqueLoading,
@@ -113,6 +116,48 @@ export function DiscoverRecipeDetail({ recipe }: Props) {
             />
           </div>
         </article>
+
+        <div className="mt-6 space-y-4">
+          <PantryCoverageBanner summary={pantryCoverage} />
+          {(recipe.ingredients.length === 0 ||
+            recipe.instructions.length === 0) &&
+          recipe.ingredients.length + recipe.instructions.length > 0 ? (
+            <section className="rounded-2xl border border-mise-warm/35 bg-mise-warn-bg px-5 py-4 text-sm text-mise-warn-text">
+              {recipe.ingredients.length === 0 ? (
+                <p>
+                  This meal has steps but no structured ingredient list in
+                  TheMealDB. Double-check quantities before cooking.
+                </p>
+              ) : (
+                <p>
+                  This meal lists ingredients but has no parsed steps yet.
+                  {recipe.sourceUrl || recipe.youtubeUrl ? (
+                    <>
+                      {" "}
+                      Open it on{" "}
+                      <a
+                        href={
+                          recipe.sourceUrl ?? recipe.youtubeUrl ?? ""
+                        }
+                        className="font-semibold underline underline-offset-2"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        the source link
+                      </a>{" "}
+                      above if you need directions.
+                    </>
+                  ) : (
+                    <>
+                      {" "}
+                      Try the YouTube or source links above if they are listed.
+                    </>
+                  )}
+                </p>
+              )}
+            </section>
+          ) : null}
+        </div>
 
         <div className="mt-8 grid gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.4fr)]">
           <section className="mise-card overflow-hidden rounded-2xl lg:sticky lg:top-24 lg:self-start">

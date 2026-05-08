@@ -262,7 +262,14 @@ export function PantryPageClient({
                 </h3>
                 <p className="mt-2 text-sm leading-relaxed text-mise-muted">
                   Add the staples you keep around. The grocery list will skip
-                  anything that&apos;s already here.
+                  anything that&apos;s already here. Browse{" "}
+                  <Link
+                    href="/discover"
+                    className="font-semibold text-mise-ink underline underline-offset-2"
+                  >
+                    Discover
+                  </Link>{" "}
+                  when you need ideas.
                 </p>
               </div>
             </div>

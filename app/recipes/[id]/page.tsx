@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { auth } from "@clerk/nextjs/server";
+import { summarizePantryCoverage } from "@/lib/cooking/pantry-match";
+import { listPantryItems } from "@/lib/supabase/pantry";
 import { getUserRecipe } from "@/lib/supabase/recipes";
 import { RecipeDetailClient } from "@/app/recipes/[id]/recipe-detail-client";
 
@@ -18,11 +20,19 @@ export default async function RecipePage({ params }: RecipePageProps) {
   }
 
   const { id } = await params;
-  const recipe = await getUserRecipe(userId, id);
+  const [recipe, pantryResult] = await Promise.all([
+    getUserRecipe(userId, id),
+    listPantryItems(userId),
+  ]);
 
   if (!recipe) {
     notFound();
   }
+
+  const pantryCoverage = summarizePantryCoverage(
+    recipe.ingredients,
+    pantryResult.items,
+  );
 
   return (
     <main className="min-h-screen bg-mise-page text-mise-ink">
@@ -53,7 +63,7 @@ export default async function RecipePage({ params }: RecipePageProps) {
           </div>
         </div>
       </header>
-      <RecipeDetailClient recipe={recipe} />
+      <RecipeDetailClient recipe={recipe} pantryCoverage={pantryCoverage} />
     </main>
   );
 }

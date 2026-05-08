@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { auth } from "@clerk/nextjs/server";
 import { notFound } from "next/navigation";
+import { summarizePantryCoverage } from "@/lib/cooking/pantry-match";
+import { listPantryItems } from "@/lib/supabase/pantry";
 import { getDiscoveryRecipeDetail } from "@/lib/cooking/themealdb";
 import { DiscoverRecipeDetail } from "@/app/discover/[id]/discover-recipe-detail";
 
@@ -17,11 +19,19 @@ export default async function DiscoverRecipePage({ params }: Props) {
 
   const { id } = await params;
   const decodedId = decodeURIComponent(id);
-  const recipe = await getDiscoveryRecipeDetail(decodedId);
+  const [recipe, pantryResult] = await Promise.all([
+    getDiscoveryRecipeDetail(decodedId),
+    listPantryItems(userId),
+  ]);
 
   if (!recipe) {
     notFound();
   }
+
+  const pantryCoverage = summarizePantryCoverage(
+    recipe.ingredients,
+    pantryResult.items,
+  );
 
   return (
     <main className="min-h-screen bg-mise-page text-mise-ink">
@@ -52,7 +62,7 @@ export default async function DiscoverRecipePage({ params }: Props) {
           </div>
         </div>
       </header>
-      <DiscoverRecipeDetail recipe={recipe} />
+      <DiscoverRecipeDetail recipe={recipe} pantryCoverage={pantryCoverage} />
     </main>
   );
 }

@@ -1,13 +1,12 @@
 "use client";
 
-import { useActionState, useEffect, useState, type FormEvent } from "react";
+import { useActionState, useEffect, useMemo, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { UserButton } from "@clerk/nextjs";
 import {
   BookOpen,
   Boxes,
-  Clock3,
   Compass,
   Import,
   Loader2,
@@ -21,6 +20,7 @@ import {
   importRecipeFromUrlAction,
   type RecipeActionState,
 } from "@/app/recipes/actions";
+import { RecipeCookbookCard } from "@/app/recipes/recipe-cookbook-card";
 import type { UserRecipe } from "@/lib/supabase/recipes";
 
 type ImportPreview = {
@@ -70,6 +70,7 @@ export function RecipesPageClient({
   recipesErrorMessage,
 }: RecipesPageClientProps) {
   const router = useRouter();
+  const [listTab, setListTab] = useState<"all" | "starred">("all");
   const [manualState, manualAction, isSavingManual] = useActionState(
     createRecipeAction,
     initialActionState,
@@ -82,6 +83,13 @@ export function RecipesPageClient({
   const [preview, setPreview] = useState<ImportPreview | null>(null);
   const [previewError, setPreviewError] = useState("");
   const [isPreviewing, setIsPreviewing] = useState(false);
+
+  const starredRecipes = useMemo(
+    () => recipes.filter((r) => r.is_starred),
+    [recipes],
+  );
+  const visibleRecipes =
+    listTab === "starred" ? starredRecipes : recipes;
 
   useEffect(() => {
     if (manualState.status === "success" || importState.status === "success") {
@@ -356,13 +364,49 @@ export function RecipesPageClient({
               <BookOpen size={18} className="text-mise-accent" aria-hidden="true" />
               <h2 className="font-serif text-lg text-mise-ink">Your cookbook</h2>
             </div>
-            <Link
-              href="/discover"
-              className="inline-flex items-center gap-2 rounded-full bg-mise-chip px-4 py-2 text-sm font-semibold text-mise-chip-text transition hover:opacity-90"
-            >
-              <Search size={16} aria-hidden="true" />
-              Discover
-            </Link>
+            <div className="flex flex-wrap items-center gap-2">
+              {recipes.length > 0 ? (
+                <div
+                  role="tablist"
+                  aria-label="Filter recipes"
+                  className="flex rounded-full border border-mise-border bg-mise-surface-soft p-1"
+                >
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={listTab === "all"}
+                    onClick={() => setListTab("all")}
+                    className={`rounded-full px-3 py-2 text-xs font-semibold transition sm:text-sm ${
+                      listTab === "all"
+                        ? "bg-mise-forest text-white"
+                        : "text-mise-muted hover:text-mise-ink"
+                    }`}
+                  >
+                    All ({recipes.length})
+                  </button>
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={listTab === "starred"}
+                    onClick={() => setListTab("starred")}
+                    className={`rounded-full px-3 py-2 text-xs font-semibold transition sm:text-sm ${
+                      listTab === "starred"
+                        ? "bg-mise-forest text-white"
+                        : "text-mise-muted hover:text-mise-ink"
+                    }`}
+                  >
+                    Favorites ({starredRecipes.length})
+                  </button>
+                </div>
+              ) : null}
+              <Link
+                href="/discover"
+                className="inline-flex min-h-11 items-center gap-2 rounded-full bg-mise-chip px-4 py-2 text-sm font-semibold text-mise-chip-text transition hover:opacity-90"
+              >
+                <Search size={16} aria-hidden="true" />
+                Discover
+              </Link>
+            </div>
           </div>
 
           {recipes.length === 0 ? (
@@ -382,45 +426,26 @@ export function RecipesPageClient({
                 </p>
               </div>
             </div>
+          ) : visibleRecipes.length === 0 ? (
+            <div className="grid min-h-[320px] place-items-center p-10 text-center">
+              <div className="max-w-sm">
+                <BookOpen
+                  className="mx-auto text-mise-muted/50"
+                  size={40}
+                  aria-hidden="true"
+                />
+                <h3 className="mt-5 font-serif text-2xl text-mise-ink">
+                  No favorites yet
+                </h3>
+                <p className="mt-2 text-sm leading-relaxed text-mise-muted">
+                  Star recipes from a recipe page to keep them pinned here.
+                </p>
+              </div>
+            </div>
           ) : (
             <div className="grid gap-4 p-5 sm:grid-cols-2">
-              {recipes.map((recipe) => (
-                <Link
-                  key={recipe.id}
-                  href={`/recipes/${recipe.id}`}
-                  className="group overflow-hidden rounded-2xl border border-mise-border bg-mise-surface transition hover:-translate-y-0.5 hover:border-mise-accent/35 hover:shadow-[var(--shadow-mise-float)]"
-                >
-                  <div
-                    className="aspect-[4/3] bg-[linear-gradient(145deg,#eef4ee_0%,#f4efe8_100%)] bg-cover bg-center"
-                    style={
-                      recipe.image_url
-                        ? { backgroundImage: `url(${recipe.image_url})` }
-                        : undefined
-                    }
-                    role={recipe.image_url ? "img" : undefined}
-                    aria-label={recipe.image_url ? recipe.title : undefined}
-                  />
-                  <div className="p-4">
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-mise-accent">
-                      {recipe.cuisine ?? recipe.source}
-                    </p>
-                    <h3 className="mt-1 line-clamp-2 font-serif text-xl text-mise-ink transition group-hover:text-mise-accent">
-                      {recipe.title}
-                    </h3>
-                    {recipe.description ? (
-                      <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-mise-muted">
-                        {recipe.description}
-                      </p>
-                    ) : null}
-                    <div className="mt-3 flex items-center justify-between text-xs text-mise-muted">
-                      <span className="inline-flex items-center gap-1">
-                        <Clock3 size={14} aria-hidden="true" />
-                        {recipe.prep_minutes ?? 30} min
-                      </span>
-                      <span>{recipe.ingredients.length} ingredients</span>
-                    </div>
-                  </div>
-                </Link>
+              {visibleRecipes.map((recipe) => (
+                <RecipeCookbookCard key={recipe.id} recipe={recipe} />
               ))}
             </div>
           )}

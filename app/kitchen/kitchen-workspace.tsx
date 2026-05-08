@@ -103,6 +103,7 @@ const demoRecipe: UserRecipe = {
   image_url: null,
   notes: null,
   source_url: null,
+  is_starred: false,
   created_at: new Date().toISOString(),
   updated_at: new Date().toISOString(),
 };

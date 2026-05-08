@@ -13,6 +13,7 @@ export type UserRecipe = {
   notes: string | null;
   source: string;
   source_url: string | null;
+  is_starred: boolean;
   created_at: string;
   updated_at: string;
 };
@@ -63,6 +64,7 @@ export async function listUserRecipes(
     .from("recipes")
     .select("*")
     .eq("clerk_user_id", clerkUserId)
+    .order("is_starred", { ascending: false })
     .order("created_at", { ascending: false })
     .returns<UserRecipe[]>();
 
@@ -75,7 +77,10 @@ export async function listUserRecipes(
   }
 
   return {
-    recipes: data ?? [],
+    recipes: (data ?? []).map((row) => ({
+      ...(row as UserRecipe),
+      is_starred: Boolean((row as UserRecipe).is_starred),
+    })),
     missingTable: false,
     errorMessage: null,
   };
@@ -95,7 +100,14 @@ export async function getUserRecipe(clerkUserId: string, recipeId: string) {
     throw error;
   }
 
-  return data;
+  if (!data) {
+    return data;
+  }
+
+  return {
+    ...data,
+    is_starred: Boolean(data.is_starred),
+  };
 }
 
 export async function createUserRecipe(input: CreateRecipeInput) {
@@ -116,6 +128,31 @@ export async function createUserRecipe(input: CreateRecipeInput) {
       source: input.source ?? "personal",
       source_url: input.sourceUrl ?? null,
     })
+    .select()
+    .single<UserRecipe>();
+
+  if (error) {
+    throw error;
+  }
+
+  return data;
+}
+
+export async function toggleRecipeStarred(clerkUserId: string, recipeId: string) {
+  const supabase = createAdminSupabaseClient();
+  const current = await getUserRecipe(clerkUserId, recipeId);
+
+  if (!current) {
+    throw new Error("Recipe not found");
+  }
+
+  const next = !(current.is_starred ?? false);
+
+  const { data, error } = await supabase
+    .from("recipes")
+    .update({ is_starred: next })
+    .eq("id", recipeId)
+    .eq("clerk_user_id", clerkUserId)
     .select()
     .single<UserRecipe>();
 

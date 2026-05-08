@@ -7,6 +7,7 @@ import {
   createGroceryItemsBulk,
   deleteGroceryItem,
   getGroceryItem,
+  listGroceryItems,
 } from "@/lib/supabase/grocery";
 import { getUserRecipe } from "@/lib/supabase/recipes";
 import {
@@ -14,6 +15,7 @@ import {
   listPantryItems,
 } from "@/lib/supabase/pantry";
 import {
+  groceryCompareKey,
   ingredientMatchesPantry,
   matchIngredientsAgainstPantry,
   parseIngredientLine,
@@ -61,6 +63,19 @@ export async function createGroceryItemAction(
   const cleanedName = parseIngredientLine(rawName).name;
 
   try {
+    const existing = await listGroceryItems(userId);
+    const key = groceryCompareKey(cleanedName);
+    const duplicate = existing.items.some(
+      (row) => !row.is_checked && groceryCompareKey(row.name) === key,
+    );
+
+    if (duplicate) {
+      return {
+        status: "success",
+        message: `${cleanedName} is already on your grocery list.`,
+      };
+    }
+
     await createGroceryItem({
       clerkUserId: userId,
       name: cleanedName,
@@ -186,40 +201,86 @@ export async function addRecipeToGroceryAction(
     const pantry = pantryResult.items;
     const matches = matchIngredientsAgainstPantry(recipe.ingredients, pantry);
 
-    const toAdd = matches.filter(
+    const toConsider = matches.filter(
       (match) => !skipPantry || !match.matchedPantryItem,
     );
-    const skipped = matches.length - toAdd.length;
+    const pantrySkipped = matches.length - toConsider.length;
 
-    if (toAdd.length === 0) {
-      return {
-        status: "success",
-        message: `Everything for ${recipe.title} is already in your pantry.`,
-        added: 0,
-        skipped,
-      };
-    }
+    const groceries = await listGroceryItems(userId);
+    const keysOnList = new Set(
+      groceries.items
+        .filter((row) => !row.is_checked)
+        .map((row) => groceryCompareKey(row.name)),
+    );
 
-    await createGroceryItemsBulk(
-      toAdd.map((match) => ({
+    const seenInBatch = new Set<string>();
+    const bulkRows: {
+      clerkUserId: string;
+      name: string;
+      notes: string;
+      recipeId: string;
+      recipeTitle: string;
+    }[] = [];
+
+    let duplicateSkipped = 0;
+
+    for (const match of toConsider) {
+      const displayName = match.parsed.name || match.parsed.raw;
+      const key = groceryCompareKey(displayName);
+      if (keysOnList.has(key) || seenInBatch.has(key)) {
+        duplicateSkipped += 1;
+        continue;
+      }
+      seenInBatch.add(key);
+      bulkRows.push({
         clerkUserId: userId,
-        name: match.parsed.name || match.parsed.raw,
+        name: displayName,
         notes: match.parsed.raw,
         recipeId: recipe.id,
         recipeTitle: recipe.title,
-      })),
-    );
+      });
+    }
+
+    if (bulkRows.length === 0) {
+      let message: string;
+      if (pantrySkipped >= matches.length && matches.length > 0) {
+        message = `Everything for ${recipe.title} is already in your pantry.`;
+      } else if (duplicateSkipped > 0) {
+        message = `Those items are already on your grocery list for ${recipe.title}.`;
+      } else {
+        message = `Nothing new to add for ${recipe.title}.`;
+      }
+      return {
+        status: "success",
+        message,
+        added: 0,
+        skipped: pantrySkipped + duplicateSkipped,
+      };
+    }
+
+    await createGroceryItemsBulk(bulkRows);
 
     revalidatePath("/grocery");
+
+    const skippedTotal = pantrySkipped + duplicateSkipped;
+    const dupPart =
+      duplicateSkipped > 0
+        ? `${duplicateSkipped} duplicate${duplicateSkipped === 1 ? "" : "s"} skipped`
+        : "";
+    const panPart =
+      pantrySkipped > 0
+        ? `${pantrySkipped} already in pantry`
+        : "";
+    const extras = [panPart, dupPart].filter(Boolean).join("; ");
 
     return {
       status: "success",
       message:
-        skipped > 0
-          ? `Added ${toAdd.length} from ${recipe.title}; skipped ${skipped} already in your pantry.`
-          : `Added ${toAdd.length} ingredients from ${recipe.title}.`,
-      added: toAdd.length,
-      skipped,
+        extras.length > 0
+          ? `Added ${bulkRows.length} from ${recipe.title}. (${extras})`
+          : `Added ${bulkRows.length} ingredients from ${recipe.title}.`,
+      added: bulkRows.length,
+      skipped: skippedTotal,
     };
   } catch (error) {
     return {

@@ -216,7 +216,7 @@ function GroceryRow({ item }: { item: GroceryItem }) {
         <input name="itemId" type="hidden" value={item.id} />
         <button
           type="submit"
-          className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-md border border-mise-border bg-mise-surface transition hover:border-mise-accent hover:bg-mise-chip"
+          className="mt-0.5 grid size-11 min-h-11 min-w-11 shrink-0 place-items-center rounded-md border border-mise-border bg-mise-surface transition hover:border-mise-accent hover:bg-mise-chip"
           aria-label={`Got ${item.name} — move to pantry`}
           title="Got it — move to pantry"
         />

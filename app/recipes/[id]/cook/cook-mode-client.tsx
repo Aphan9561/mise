@@ -269,7 +269,7 @@ export function CookModeClient({ recipe }: Props) {
         onClose={closeTechnique}
       />
 
-      <footer className="sticky bottom-0 z-10 border-t border-mise-border bg-mise-surface/95 backdrop-blur-md">
+      <footer className="sticky bottom-0 z-10 border-t border-mise-border bg-mise-surface/95 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur-md">
         <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-4 py-4 sm:px-6">
           <button
             type="button"
@@ -302,14 +302,14 @@ export function CookModeClient({ recipe }: Props) {
       <button
         type="button"
         onClick={() => setIsAssistantOpen((current) => !current)}
-        className="fixed bottom-24 right-6 z-30 mise-btn-primary rounded-full px-5 py-3 shadow-[var(--shadow-mise-float)]"
+        className="fixed bottom-[max(1.5rem,calc(env(safe-area-inset-bottom)+5.5rem))] right-[max(1rem,calc(env(safe-area-inset-right)+0.75rem))] z-30 mise-btn-primary rounded-full px-5 py-3 shadow-[var(--shadow-mise-float)]"
       >
         <Bot size={17} aria-hidden="true" />
         Ask Mise
       </button>
 
       {isAssistantOpen ? (
-        <aside className="fixed inset-x-4 bottom-44 z-30 mise-card max-h-[min(60vh,420px)] overflow-hidden rounded-2xl sm:left-auto sm:right-6 sm:w-[400px]">
+        <aside className="fixed inset-x-[max(0.75rem,calc(env(safe-area-inset-left)+2px))] bottom-[max(1.25rem,calc(env(safe-area-inset-bottom)+11rem))] z-30 mise-card max-h-[min(60vh,420px)] overflow-hidden rounded-2xl sm:inset-x-auto sm:right-[max(1rem,calc(env(safe-area-inset-right)+0.75rem))] sm:bottom-[max(1.25rem,calc(env(safe-area-inset-bottom)+6.5rem))] sm:w-[400px]">
           <div className="flex items-center justify-between border-b border-mise-border px-4 py-3">
             <div className="flex items-center gap-2">
               <Bot size={17} className="text-mise-accent" aria-hidden="true" />
@@ -326,7 +326,7 @@ export function CookModeClient({ recipe }: Props) {
             </button>
           </div>
           <div className="flex max-h-[340px] flex-col">
-            <div className="flex-1 space-y-3 overflow-y-auto p-4">
+            <div className="flex-1 space-y-3 overflow-y-auto p-4" aria-live="polite" aria-busy={isChatLoading}>
               {chatMessages.map((message, index) => (
                 <p
                   key={`${message.role}-${index}`}

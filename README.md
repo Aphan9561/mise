@@ -15,57 +15,70 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 ## Environment Variables
 
-The repo includes:
+Tracked template: [.env.local.example](.env.local.example). Copy it to `.env.local` for local development.
 
-- `.env.local` for local development placeholders
-- `.env.local.example` as a tracked template you can reuse in other environments
+Values you need:
 
-Fill in the Clerk and Supabase values before wiring up auth or database calls.
-Add `GEMINI_API_KEY` or `ANTHROPIC_API_KEY` for AI cooking help. Recipe
-discovery uses [TheMealDB](https://www.themealdb.com/api.php) (no key). If the
-API is unreachable, the app falls back to local sample recipes.
+| Variable | Purpose |
+| --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Browser-safe Supabase project URL and anon publishable key. |
+| `SUPABASE_SERVICE_ROLE_KEY` | Server-only key used by Next.js routes and Server Actions (`lib/supabase/admin.ts`). **Never expose to the client.** |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY` | Clerk authentication. |
+| `NEXT_PUBLIC_CLERK_SIGN_IN_URL`, `NEXT_PUBLIC_CLERK_SIGN_UP_URL` | Redirect URLs for Clerk (defaults in the template work with this repo’s `/sign-in` and `/sign-up` pages). |
+| `ANTHROPIC_API_KEY` *or* `GEMINI_API_KEY` | Technique explanations and the in-app assistant. Omit both to run without live AI (local fallbacks still apply). |
 
-## Clerk + Supabase
+Discovery uses [TheMealDB](https://www.themealdb.com/api.php) (no key). If their API or your network drops, Discover falls back to bundled sample recipes.
 
-This repo uses:
+## Database setup (Supabase)
 
-- Clerk for authentication
-- Supabase for application data
-- `clerk_user_id` as the identity key stored in the database
-- Gemini or Claude-compatible API calls for technique explanations, URL import,
-  and chat
-- TheMealDB for recipe discovery
+1. Create a Supabase project and paste the matching URL and keys into `.env.local`.
 
-The protected recipe pages store personal recipes in the `recipes` table. URL
-imports first look for structured recipe data on the page, including recipe
-photos when available, then fall back to the configured AI provider when needed.
-Create or update the tables by running the SQL in `supabase/schema.sql`.
+2. In the SQL editor (**or** with the Supabase CLI), run **`supabase/schema.sql`** against your database whenever you bootstrap or update the schema.
+
+Important tables included in `schema.sql`:
+
+- `profiles` — optional user profile synced with Clerk (`clerk_user_id`).
+- `recipes` — personal cookbook (`is_starred` for favorites, ingredients/instructions arrays, URLs, notes).
+- `pantry_items` — what you already have at home.
+- `grocery_items` — shopping list linked optionally to `recipes`; checking an item moves it into the pantry.
+
+Re-run the file after pulls that add migrations (for example when new `alter table … add column` blocks appear).
+
+## Clerk + Supabase wiring
+
+This repo stores data keyed by Clerk’s `userId` (`clerk_user_id` columns). Profiles and CRUD helpers live under `lib/supabase/`.
+
+## Feature map
+
+- **`/recipes`** — cookbook, favorites filter, manual add, URL import, star-on-card.
+- **`/recipes/[id]`** — magazine-style recipe view, pantry match banner, grocery preview, Ask Mise, cook mode entry.
+- **`/recipes/[id]/cook`** — large-step cook flow, wake lock, assistant, technique taps.
+- **`/discover`** — TheMealDB search with skeleton loading and clearer network errors.
+- **`/discover/[id]`** — read-only detail with pantry match banner and technique taps.
+- **`/pantry`**, **`/grocery`** — inventory loop (grocery duplicates are suppressed; checking off sends items to pantry when not already matched).
 
 ## Stack
 
 - Next.js App Router
 - Tailwind CSS v4
-- Clerk env scaffolding
-- Supabase env scaffolding
+- Clerk
+- Supabase (service-role server access)
 
 ## Structure
 
-- `app/page.tsx` contains the cooking-themed landing page
-- `app/recipes/page.tsx` lists saved recipes and contains manual/URL add flows
-- `app/recipes/[id]/page.tsx` contains the individual recipe cook view and
-  assistant button, plus edit, notes, and delete flows for saved recipes
-- `app/discover/page.tsx` lists TheMealDB results with a filter sidebar (category,
-  area, main ingredient, or dish name)
-- `app/discover/[id]/page.tsx` is the full read-only recipe view for a discovered meal,
-  with **Add to my recipes** to copy it into Supabase
-- `app/api/*` contains the technique help, assistant, and discovery endpoints
-- `app/layout.tsx` defines app metadata and typography
-- `app/globals.css` holds the global theme tokens and base styles
-- `lib/supabase/*` contains the Supabase connection helpers
+- `app/page.tsx` — landing page
+- `app/recipes/page.tsx` — cookbook list + add/import
+- `app/recipes/[id]/page.tsx` — recipe detail, edit, pantry match, grocery, assistant
+- `app/recipes/[id]/cook/` — step-by-step mode
+- `app/discover/` — Discover grid and meal detail from TheMealDB
+- `app/pantry/`, `app/grocery/` — pantry and shopping list
+- `app/api/*` — technique, assistant, discovery, imports
+- `lib/supabase/*` — typed data access
+- `lib/cooking/*` — importing, pantry matching, TheMealDB client
+- `app/globals.css` — theme tokens and shared `.mise-*` components
 
-## Next Steps
+## Next steps checklist
 
-1. Run `supabase/schema.sql` in Supabase.
-2. Add real Gemini/Anthropic API keys to `.env.local` if you want live AI
-   responses (discovery does not require extra keys).
-3. Extend the `recipes` table into favorites, grocery lists, and photo journal entries.
+1. Run `supabase/schema.sql` in Supabase whenever the schema changes.
+2. Confirm `.env.local` has Clerk and Supabase values.
+3. Add at least one of `GEMINI_API_KEY` or `ANTHROPIC_API_KEY` if you want live assistant and technique replies.

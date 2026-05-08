@@ -137,7 +137,7 @@ export function useTechniqueHighlighter() {
           key={`${segment}-${index}`}
           type="button"
           onClick={(event) => explainTechnique(normalizedTerm, step, event)}
-          className="mx-0.5 rounded-md bg-mise-technique px-1.5 py-0.5 font-semibold text-mise-technique-text underline-offset-2 hover:bg-mise-technique-hover hover:underline"
+          className="mx-0.5 rounded-md bg-mise-technique px-1.5 py-0.5 font-semibold text-mise-technique-text underline-offset-2 outline-none ring-mise-accent/35 hover:bg-mise-technique-hover hover:underline focus-visible:ring-2"
           title={`Explain ${normalizedTerm}`}
         >
           {segment}
@@ -227,7 +227,11 @@ export function TechniquePopover({
             <X size={14} aria-hidden="true" />
           </button>
         </div>
-        <p className="mt-2 text-sm leading-relaxed text-mise-muted">
+        <p
+          className="mt-2 text-sm leading-relaxed text-mise-muted"
+          aria-live="polite"
+          aria-atomic="true"
+        >
           {technique.explanation}
         </p>
         {technique.cue ? (

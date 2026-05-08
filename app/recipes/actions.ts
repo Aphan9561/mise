@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import {
   createUserRecipe,
   deleteUserRecipe,
+  toggleRecipeStarred,
   updateUserRecipe,
 } from "@/lib/supabase/recipes";
 import { importRecipeFromUrl } from "@/lib/cooking/import-url";
@@ -51,9 +52,17 @@ function readOptionalUrl(value: FormDataEntryValue | null) {
 function formatRecipeError(error: unknown) {
   const message = error instanceof Error ? error.message : "Unknown error";
 
-  return message.includes('relation "recipes" does not exist')
-    ? "Create or update the recipes table by running supabase/schema.sql first."
-    : message;
+  if (message.includes('relation "recipes" does not exist')) {
+    return "Create or update the recipes table by running supabase/schema.sql first.";
+  }
+  if (
+    message.toLowerCase().includes("is_starred") ||
+    (message.includes("column") && message.includes("does not exist"))
+  ) {
+    return "Apply the latest recipes table changes (is_starred) from supabase/schema.sql.";
+  }
+
+  return message;
 }
 
 function themealdbMealUrl(discoveryId: string): string | null {
@@ -301,6 +310,37 @@ export async function updateRecipeAction(
     return {
       status: "error",
       message: `Could not update recipe: ${formatRecipeError(error)}`,
+    };
+  }
+}
+
+export async function toggleRecipeStarAction(recipeId: string): Promise<{
+  ok: boolean;
+  isStarred?: boolean;
+  message?: string;
+}> {
+  const { userId } = await auth();
+
+  if (!userId) {
+    return { ok: false, message: "You need to be signed in." };
+  }
+
+  const id = recipeId.trim();
+
+  if (!id) {
+    return { ok: false, message: "Missing recipe." };
+  }
+
+  try {
+    const updated = await toggleRecipeStarred(userId, id);
+    revalidatePath("/recipes");
+    revalidatePath(`/recipes/${id}`);
+
+    return { ok: true, isStarred: updated.is_starred };
+  } catch (error) {
+    return {
+      ok: false,
+      message: formatRecipeError(error),
     };
   }
 }

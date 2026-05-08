@@ -300,3 +300,43 @@ export function matchIngredientsAgainstPantry(
     };
   });
 }
+
+/** Stable key for matching grocery rows and deduping additions. */
+export function groceryCompareKey(displayName: string): string {
+  const parsedName = parseIngredientLine(displayName).name.trim().toLowerCase();
+  const fallback = displayName.trim().toLowerCase();
+  return parsedName || fallback;
+}
+
+export type PantryCoverageSummary = {
+  ingredientLines: number;
+  matchedIngredients: number;
+  percentRounded: number;
+};
+
+export function summarizePantryCoverage(
+  ingredients: string[],
+  pantry: PantryItem[],
+): PantryCoverageSummary {
+  if (!ingredients.length) {
+    return {
+      ingredientLines: 0,
+      matchedIngredients: 0,
+      percentRounded: 0,
+    };
+  }
+
+  const matches = matchIngredientsAgainstPantry(ingredients, pantry);
+  const matchedIngredients = matches.filter(
+    (m) => m.matchedPantryItem !== null,
+  ).length;
+  const percentRounded = Math.round(
+    (matchedIngredients / ingredients.length) * 100,
+  );
+
+  return {
+    ingredientLines: ingredients.length,
+    matchedIngredients,
+    percentRounded,
+  };
+}

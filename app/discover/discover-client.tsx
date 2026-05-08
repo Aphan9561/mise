@@ -43,6 +43,29 @@ function buildDiscoveryApiUrl(filters: {
   return `/api/discovery?${params.toString()}`;
 }
 
+function DiscoverSkeletonGrid({ count = 6 }: { count?: number }) {
+  return (
+    <div
+      className="grid gap-4 sm:grid-cols-2"
+      aria-hidden="true"
+    >
+      {Array.from({ length: count }).map((_, index) => (
+        <div
+          key={`sk-${index}`}
+          className="animate-pulse overflow-hidden rounded-2xl border border-mise-border bg-mise-surface"
+        >
+          <div className="aspect-[4/3] bg-mise-border/45" />
+          <div className="space-y-3 p-4">
+            <div className="h-2 w-24 rounded-full bg-mise-border/70" />
+            <div className="h-6 w-[88%] rounded-lg bg-mise-border/55" />
+            <div className="h-10 w-full rounded-lg bg-mise-border/35" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export function DiscoverClient({
   categories,
   areas,
@@ -59,9 +82,11 @@ export function DiscoverClient({
   const [source, setSource] = useState(initialSource);
   const [isSearching, setIsSearching] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   const runSearch = useCallback(async () => {
     setIsSearching(true);
+    setFetchError(null);
     try {
       const response = await fetch(
         buildDiscoveryApiUrl({ category, area, ingredient, query }),
@@ -69,13 +94,25 @@ export function DiscoverClient({
       const data = (await response.json()) as {
         source?: string;
         recipes?: DiscoveryRecipe[];
+        error?: string;
       };
+
+      if (!response.ok) {
+        setFetchError(
+          data.error ?? `Search failed (${response.status}). Try again.`,
+        );
+        return;
+      }
 
       setSource(data.source ?? "local");
       setRecipes(
         data.recipes && data.recipes.length > 0
           ? data.recipes
           : fallbackDiscoveryRecipes,
+      );
+    } catch {
+      setFetchError(
+        "We couldn’t reach Discover. Check your connection and try again.",
       );
     } finally {
       setIsSearching(false);
@@ -88,6 +125,7 @@ export function DiscoverClient({
     setIngredient("");
     setQuery("");
     setIsSearching(true);
+    setFetchError(null);
     try {
       const response = await fetch(
         buildDiscoveryApiUrl({
@@ -100,12 +138,23 @@ export function DiscoverClient({
       const data = (await response.json()) as {
         source?: string;
         recipes?: DiscoveryRecipe[];
+        error?: string;
       };
+
+      if (!response.ok) {
+        setFetchError(data.error ?? `Search failed (${response.status}).`);
+        return;
+      }
+
       setSource(data.source ?? "local");
       setRecipes(
         data.recipes && data.recipes.length > 0
           ? data.recipes
           : fallbackDiscoveryRecipes,
+      );
+    } catch {
+      setFetchError(
+        "We couldn’t reach Discover. Check your connection and try again.",
       );
     } finally {
       setIsSearching(false);
@@ -276,12 +325,51 @@ export function DiscoverClient({
           <p className="mb-6 text-sm text-mise-muted">
             <span className="text-mise-ink/85">{filterSummary}</span>
             <span className="mx-2 text-mise-border">·</span>
-            <span className="tabular-nums">{recipes.length} results</span>
+            <span className="tabular-nums" aria-live="polite">
+              {recipes.length} results
+            </span>
             <span className="mx-2 text-mise-border">·</span>
             <span className="italic text-mise-muted/80">{source}</span>
           </p>
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          {fetchError ? (
+            <section
+              className="mb-6 rounded-2xl border border-mise-danger-border bg-mise-danger-bg px-4 py-3 text-sm text-mise-danger"
+              role="alert"
+            >
+              <p>{fetchError}</p>
+              <button
+                type="button"
+                className="mt-3 mise-btn-secondary text-xs"
+                onClick={() => void runSearch()}
+              >
+                Try again
+              </button>
+            </section>
+          ) : null}
+
+          <div aria-busy={isSearching} aria-label="Recipe search results">
+          {isSearching ? (
+            <DiscoverSkeletonGrid />
+          ) : recipes.length === 0 ? (
+            <div className="grid min-h-[280px] place-items-center rounded-2xl border border-dashed border-mise-border bg-mise-surface/60 p-10 text-center">
+              <div className="max-w-sm">
+                <Search
+                  className="mx-auto text-mise-muted/50"
+                  size={36}
+                  aria-hidden="true"
+                />
+                <h3 className="mt-4 font-serif text-xl text-mise-ink">
+                  No recipes match
+                </h3>
+                <p className="mt-2 text-sm text-mise-muted">
+                  Widen your filters or pick a different dish name, then search
+                  again.
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="grid gap-4 sm:grid-cols-2">
             {recipes.map((recipe) => (
               <Link
                 key={recipe.id}
@@ -296,7 +384,11 @@ export function DiscoverClient({
                       : undefined
                   }
                   role={recipe.imageUrl ? "img" : undefined}
-                  aria-label={recipe.imageUrl ? recipe.title : undefined}
+                  aria-label={
+                    recipe.imageUrl
+                      ? `${recipe.title} — recipe photo`
+                      : undefined
+                  }
                 />
                 <div className="p-4">
                   <p className="text-[10px] font-semibold uppercase tracking-wider text-mise-accent">
@@ -322,6 +414,8 @@ export function DiscoverClient({
                 </div>
               </Link>
             ))}
+            </div>
+          )}
           </div>
         </div>
       </div>
