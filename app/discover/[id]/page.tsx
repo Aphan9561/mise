@@ -1,10 +1,13 @@
 import Link from "next/link";
-import { auth } from "@clerk/nextjs/server";
 import { notFound } from "next/navigation";
-import { summarizePantryCoverage } from "@/lib/cooking/pantry-match";
-import { listPantryItems } from "@/lib/supabase/pantry";
-import { getDiscoveryRecipeDetail } from "@/lib/cooking/themealdb";
+import { UserButton } from "@clerk/nextjs";
+import { auth } from "@clerk/nextjs/server";
+import { Utensils } from "lucide-react";
 import { DiscoverRecipeDetail } from "@/app/discover/[id]/discover-recipe-detail";
+import { SectionNav } from "@/app/components/section-nav";
+import { summarizePantryCoverage } from "@/lib/cooking/pantry-match";
+import { getDiscoveryRecipeDetail } from "@/lib/cooking/themealdb";
+import { listPantryItems } from "@/lib/supabase/pantry";
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -37,28 +40,25 @@ export default async function DiscoverRecipePage({ params }: Props) {
     <main className="min-h-screen bg-mise-page text-mise-ink">
       <header className="mise-header">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-5 sm:px-6 lg:px-8">
-          <Link href="/discover" className="mise-btn-ghost rounded-full text-sm">
-            ← Discover
+          <Link href="/recipes" className="flex min-w-0 items-center gap-3">
+            <div className="grid size-11 place-items-center rounded-md bg-mise-accent text-mise-page">
+              <Utensils size={18} aria-hidden="true" />
+            </div>
+            <div className="min-w-0">
+              <h1 className="truncate font-serif text-2xl tracking-tight text-mise-ink sm:text-3xl">
+                Mise
+              </h1>
+              <p
+                className="truncate text-[10px] font-semibold uppercase text-mise-muted"
+                style={{ letterSpacing: "0.2em" }}
+              >
+                Discover · {recipe.title}
+              </p>
+            </div>
           </Link>
-          <div className="flex items-center gap-2">
-            <Link
-              href="/pantry"
-              className="mise-btn-secondary py-2 pl-3 pr-4 text-sm"
-            >
-              Pantry
-            </Link>
-            <Link
-              href="/grocery"
-              className="mise-btn-secondary py-2 pl-3 pr-4 text-sm"
-            >
-              Grocery
-            </Link>
-            <Link
-              href="/recipes"
-              className="mise-btn-secondary text-sm"
-            >
-              My recipes
-            </Link>
+          <div className="flex items-center gap-3">
+            <SectionNav />
+            <UserButton />
           </div>
         </div>
       </header>

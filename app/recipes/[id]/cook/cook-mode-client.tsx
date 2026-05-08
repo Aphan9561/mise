@@ -2,6 +2,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
+import { UserButton } from "@clerk/nextjs";
 import {
   Bot,
   ChevronLeft,
@@ -13,6 +14,7 @@ import {
   Volume2,
   X,
 } from "lucide-react";
+import { SectionNav } from "@/app/components/section-nav";
 import {
   TechniquePopover,
   useTechniqueHighlighter,
@@ -325,7 +327,12 @@ export function CookModeClient({ recipe }: Props) {
                 : `Step ${stepIndex + 1} of ${totalSteps}`}
             </p>
           </div>
-          <div className="w-[68px] shrink-0" aria-hidden="true" />
+          <UserButton />
+        </div>
+        <div className="border-t border-mise-border/55">
+          <div className="mx-auto flex max-w-6xl justify-end px-4 py-2 sm:px-6 lg:px-8">
+            <SectionNav />
+          </div>
         </div>
         <div className="h-1 w-full bg-mise-border/60">
           <div

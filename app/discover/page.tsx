@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { UserButton } from "@clerk/nextjs";
 import { auth } from "@clerk/nextjs/server";
 import { Utensils } from "lucide-react";
 import {
@@ -42,7 +43,10 @@ export default async function DiscoverPage() {
               </p>
             </div>
           </Link>
-          <SectionNav />
+          <div className="flex items-center gap-3">
+            <SectionNav />
+            <UserButton />
+          </div>
         </div>
       </header>
       <DiscoverClient
